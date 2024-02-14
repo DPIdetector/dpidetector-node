@@ -1,0 +1,86 @@
+services:
+  cloak:
+    # image: ghcr.io/roskomsvoboda/dpidetector-cloak
+    image: roskomsvoboda/dpidetector-cloak
+    build:
+      context: .
+      dockerfile: ./protos/cloak/Dockerfile
+    env_file:
+      - "user.conf"
+    logging:
+      driver: json-file
+    restart: always
+
+  shadowsocks:
+    # image: ghcr.io/roskomsvoboda/dpidetector-shadowsocks
+    image: roskomsvoboda/dpidetector-shadowsocks
+    build:
+      context: .
+      dockerfile: ./protos/shadowsocks/Dockerfile
+    env_file:
+      - "user.conf"
+    logging:
+      driver: json-file
+    restart: always
+
+  amnezia-wireguard:
+    # image: ghcr.io/roskomsvoboda/dpidetector-amnezia-wireguard
+    image: roskomsvoboda/dpidetector-amnezia-wireguard
+    build:
+      context: .
+      dockerfile: ./protos/amnezia-wireguard/Dockerfile
+    env_file:
+      - "user.conf"
+    logging:
+      driver: json-file
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    restart: always
+
+  wireguard:
+    # image: ghcr.io/roskomsvoboda/dpidetector-wireguard
+    image: roskomsvoboda/dpidetector-wireguard
+    build:
+      context: .
+      dockerfile: ./protos/wireguard/Dockerfile
+    env_file:
+      - "user.conf"
+    logging:
+      driver: json-file
+    cap_add:
+      - NET_ADMIN
+    restart: always
+
+  openvpn-tlscrypt:
+    # image: ghcr.io/roskomsvoboda/dpidetector-openvpn-tlscrypt
+    image: roskomsvoboda/dpidetector-openvpn-tlscrypt
+    build:
+      context: .
+      dockerfile: ./protos/openvpn-tlscrypt/Dockerfile
+    env_file:
+      - "user.conf"
+    logging:
+      driver: json-file
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    restart: always
+
+  openvpn:
+    # image: ghcr.io/roskomsvoboda/dpidetector-openvpn
+    image: roskomsvoboda/dpidetector-openvpn
+    build:
+      context: .
+      dockerfile: ./protos/openvpn/Dockerfile
+    env_file:
+      - "user.conf"
+    logging:
+      driver: json-file
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    restart: always
