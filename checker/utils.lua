@@ -9,7 +9,7 @@ function _U.getenv(name)
   local ret
   ret = os.getenv(name)
   if not ret then
-    io.stderr:write(("Вы не указали значение переменной '%s'. Пожалуйста, укажите его в в user.conf"):format(name))
+    io.stderr:write(("Вы не указали значение переменной '%s'. Пожалуйста, укажите его в user.conf"):format(name))
     os.exit(1)
   else
     return ret

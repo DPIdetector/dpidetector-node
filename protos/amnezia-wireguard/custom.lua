@@ -124,7 +124,7 @@ _C.checker = function(server)
     if res:match(server.meta.server_ip) then
       ret = true
     else
-      _G.stderr:write(("Проверка провалилась! Ответ сервиса:\n=========\n%s\n=========\n"):format(res))
+      _G.stderr:write("Проверка провалилась!\n")
     end
   end
   return ret
