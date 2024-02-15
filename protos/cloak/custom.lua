@@ -107,6 +107,7 @@ _C.disconnect = function(_server)
     _C.clk_proc:wait()
     wait()
     _C.clk_proc = nil
+    sleep(5)
   end
 end
 

@@ -61,6 +61,7 @@ _C.disconnect = function(_server)
     _C.ss_proc:wait()
     wait()
     _C.ss_proc = nil
+    sleep(5)
   end
 end
 

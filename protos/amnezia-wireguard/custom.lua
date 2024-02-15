@@ -110,6 +110,7 @@ _C.disconnect = function(_server)
     end
   end
   wait()
+  sleep(5)
 end
 
 _C.checker = function(server)
