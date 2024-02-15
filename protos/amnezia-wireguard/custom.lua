@@ -11,9 +11,9 @@ local cfg_path = "/etc/wireguard/awg.conf"
 _C.proto = "amnezia-wireguard"
 
 _C.init = function()
-  _C.cfg_fd = io.open(cfg_path, "r+")
-  _C.cfg_tpl = _C.cfg_fd:read"*a"
-  _C.cfg_fd:seek"set" -- курсор в начало файла (нам потом туда писать конфиг)
+  local fd = io.open(cfg_path, "r")
+  _C.cfg_tpl = fd:read"*a"
+  fd:close()
 end
 
 _C.connect = function(server)
@@ -77,9 +77,10 @@ _C.connect = function(server)
   }
   local srv_cfg = _C.cfg_tpl:gsub("__([A-Za-z0-9_-.]+)__", replaces)
 
-  _C.cfg_fd:write(srv_cfg)
-  _C.cfg_fd:seek"set"
-  _C.cfg_fd:flush()
+  local fd = io.open(cfg_path, "w+")
+  fd:write(srv_cfg)
+  fd:flush()
+  fd:close()
 
   local exitcode = sp.call{
     "wg-quick",

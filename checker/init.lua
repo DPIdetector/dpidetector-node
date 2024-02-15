@@ -24,6 +24,14 @@ else
   _G.stderr = _G.devnull
 end
 
+if custom.init then
+  local ok, ret = pcall(custom.init)
+  if not ok and _G.DEBUG then
+    _G.stderr:write(("\nОшибка при инициализации: %q\n"):format(ret))
+    os.exit(1)
+  end
+end
+
 local backend_domain = "dpidetector.org"
 local api = ("https://%s/api"):format(backend_domain)
 local servers_endpoint = ("%s/servers/"):format(api)
@@ -38,14 +46,13 @@ while true do
 
   if geo:match"RU" then
     -- Выполнять проверки только если нода выходит в интернет в России (например, не через VPN)
-    -- т.к. нас интересует именно блокировка трафика из/внутри России,
+    -- т.к. в данный момент нас интересует именно блокировка трафика из/внутри России,
     -- а трафик из заграницы для этих целей бесполезен
-    local headers = {
-      ("Token: %s"):format(_G.token),
-    }
     local servers_fetched = req{
       url = servers_endpoint,
-      headers = headers,
+      headers = {
+        ("Token: %s"):format(_G.token),
+      }
     }
 
     if servers_fetched:match"COULDNT_CONNECT" then
@@ -92,8 +99,7 @@ while true do
   end
 
   for _, server in ipairs(servers) do
-    local init = custom.init and pcall(custom.init)
-    local conn = init and custom.connect(server)
+    local conn = custom.connect(server)
     if conn then
       local result = custom.checker and custom.checker(server) or false
       custom.disconnect(server)
