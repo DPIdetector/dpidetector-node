@@ -48,11 +48,14 @@ return function(settings)
     end
     _G.stderr:write("(выполнение запроса начато)")
   end
+
   local success, errmsg = pcall(c.perform, c)
   if not success then
     _G.stderr:write(errmsg)
     return errmsg
   end
+
+  c:close()
 
   local ret = table.concat(wbuf)
   if _G.DEBUG then
