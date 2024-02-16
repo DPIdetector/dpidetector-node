@@ -101,14 +101,16 @@ _C.disconnect = function(_server)
     _C.ss_proc:terminate()
     _C.ss_proc:wait()
     _C.ss_proc = nil
+    sleep(2)
+    wait()
   end
   if _C.clk_proc then
     _C.clk_proc:terminate()
     _C.clk_proc:wait()
     _C.clk_proc = nil
-  end
-    sleep(5)
+    sleep(2)
     wait()
+  end
 end
 
 _C.checker = function(server)

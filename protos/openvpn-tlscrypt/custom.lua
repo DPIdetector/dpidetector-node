@@ -70,7 +70,7 @@ _C.connect = function(server)
   if not _C.ovpn_proc or _C.ovpn_proc:poll() then
     _G.stderr:write(("Проблема при инициализации! Сообщение об ошибке: %s. Код: %d\n"):format(_E.errmsg, _E.errno))
   end
-  sleep(5)
+  sleep(2)
   return true
 end
 
@@ -79,7 +79,7 @@ _C.disconnect = function(_server)
     _C.ovpn_proc:terminate()
     _C.ovpn_proc:wait()
     _C.ovpn_proc = nil
-    sleep(5)
+    sleep(2)
     wait()
   end
 end

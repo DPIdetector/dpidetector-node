@@ -75,7 +75,7 @@ _C.connect = function(server)
   if exitcode ~= 0 then
     _G.stderr:write(("Проблема при инициализации! Код выхода: %d\n"):format(exitcode))
   end
-  sleep(5)
+  sleep(2)
   return true
 end
 
@@ -92,7 +92,7 @@ _C.disconnect = function(_server)
       _G.stderr:write(("Проблема при остановке! Код выхода: %d\n"):format(exitcode))
     end
   end
-  sleep(5)
+  sleep(2)
   wait()
 end
 
