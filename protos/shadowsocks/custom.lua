@@ -59,9 +59,9 @@ _C.disconnect = function(_server)
   if _C.ss_proc then
     _C.ss_proc:terminate()
     _C.ss_proc:wait()
-    wait()
     _C.ss_proc = nil
     sleep(5)
+    wait()
   end
 end
 

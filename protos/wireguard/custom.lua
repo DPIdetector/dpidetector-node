@@ -92,8 +92,8 @@ _C.disconnect = function(_server)
       _G.stderr:write(("Проблема при остановке! Код выхода: %d\n"):format(exitcode))
     end
   end
-  wait()
   sleep(5)
+  wait()
 end
 
 _C.checker = function(server)

@@ -78,9 +78,9 @@ _C.disconnect = function(_server)
   if _C.ovpn_proc then
     _C.ovpn_proc:terminate()
     _C.ovpn_proc:wait()
-    wait()
     _C.ovpn_proc = nil
     sleep(5)
+    wait()
   end
 end
 
