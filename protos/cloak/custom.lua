@@ -19,7 +19,7 @@ end
 _C.connect = function(server)
   if not server.domain then
     _G.stderr:write(
-      ("Запись о сервере %s не содержит информации о домене, который стоит использовать для подключения к нему")
+      ("\nЗапись о сервере %s не содержит информации о домене, который стоит использовать для подключения к нему\n")
       :format(tostring(server.name))
     )
     return false
@@ -62,6 +62,8 @@ _C.connect = function(server)
   fd:flush()
   fd:close()
 
+  local failed
+
   local _E = {}
   _C.clk_proc, _E.errmsg, _E.errno = sp.popen{
     "/usr/bin/ck-client",
@@ -72,8 +74,9 @@ _C.connect = function(server)
   }
   if not _C.clk_proc or _C.clk_proc:poll() then
     _G.stderr:write(
-      ("[Cloak] Проблема при инициализации! Сообщение об ошибке: %s. Код: %d\n"):format(_E.errmsg, _E.errno)
+      ("\n[Cloak] Проблема при инициализации! Сообщение об ошибке: %s. Код: %d\n"):format(_E.errmsg, _E.errno)
     )
+    failed = true
   end
   sleep(2)
   _C.ss_proc, _E.errmsg, _E.errno = sp.popen{
@@ -89,8 +92,17 @@ _C.connect = function(server)
   }
   if not _C.ss_proc or _C.ss_proc:poll() then
     _G.stderr:write(
-      ("[ShadowSocks] Проблема при инициализации! Сообщение об ошибке: %s. Код: %d\n"):format(_E.errmsg, _E.errno)
+      ("\n[ShadowSocks] Проблема при инициализации! Сообщение об ошибке: %s. Код: %d\n"):format(_E.errmsg, _E.errno)
     )
+    failed = true
+  end
+  if failed then
+    if _C.ss_proc then _C.ss_proc:kill() end
+    if _C.clk_proc then _C.clk_proc:kill() end
+    _C.ss_proc = nil
+    _C.clk_proc = nil
+    wait()
+    return false
   end
   sleep(3)
   return true
@@ -103,6 +115,10 @@ _C.disconnect = function(_server)
     _C.ss_proc = nil
     sleep(2)
     wait()
+  else
+    io.stderr:write(
+      "\n[ShadowSocks] Вызвана функция отключения, но что-то случилось c дескрипторами подключения. Нужна отладка!\n"
+    )
   end
   if _C.clk_proc then
     _C.clk_proc:terminate()
@@ -110,23 +126,25 @@ _C.disconnect = function(_server)
     _C.clk_proc = nil
     sleep(2)
     wait()
+  else
+    io.stderr:write(
+      "\n[Cloak] Вызвана функция отключения, но что-то случилось c дескрипторами подключения. Нужна отладка!\n"
+    )
   end
 end
 
 _C.checker = function(server)
   local ret = false
-  if not (_C.ss_proc and _C.clk_proc) or _C.ss_proc:poll() or _C.clk_proc:poll() then
-    _G.stderr:write"Проверка не выполняется, т.к. туннель не был поднят.\n"
+  local res = req{
+    url = "https://geo.censortracker.org/get-ip/plain",
+    proxy = "socks5://127.0.0.1:1080",
+  }
+  if res:match(server.meta.server_ip) then
+    ret = true
   else
-    local res = req{
-      url = "https://geo.censortracker.org/get-ip/plain",
-      proxy = "socks5://127.0.0.1:1080",
-    }
-    if res:match(server.meta.server_ip) then
-      ret = true
-    else
-      _G.stderr:write("Проверка провалилась!\n")
-    end
+    _G.stderr:write("\nПроверка провалилась!\n")
+    _G.stderr:write(("\nIP сервера из метаданных: %q\n"):format(server.meta.server_ip))
+    _G.stderr:write(("\nОтвет сервиса определения IP: %q\n"):format(res))
   end
   return ret
 end

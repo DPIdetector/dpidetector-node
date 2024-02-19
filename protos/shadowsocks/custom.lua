@@ -13,7 +13,7 @@ end
 _C.connect = function(server)
   if not server.domain then
     _G.stderr:write(
-      ("Запись о сервере %s не содержит информации о домене, который стоит использовать для подключения к нему")
+      ("\nЗапись о сервере %s не содержит информации о домене, который стоит использовать для подключения к нему\n")
       :format(tostring(server.name))
     )
     return false
@@ -46,9 +46,10 @@ _C.connect = function(server)
     stderr = _G.stderr,
   }
   if not _C.ss_proc or _C.ss_proc:poll() then
-    _G.stderr:write(("Проблема при инициализации! Сообщение об ошибке: %s. Код: %d\n"):format(_E.errmsg, _E.errno))
-    wait()
+    _G.stderr:write(("\nПроблема при инициализации! Сообщение об ошибке: %s. Код: %d\n"):format(_E.errmsg, _E.errno))
+    if _C.ss_proc then _C.ss_proc:kill() end
     _C.ss_proc = nil
+    wait()
     return false
   end
   sleep(5)
@@ -62,23 +63,23 @@ _C.disconnect = function(_server)
     _C.ss_proc = nil
     sleep(2)
     wait()
+  else
+    io.stderr:write("\nВызвана функция отключения, но что-то случилось c дескрипторами подключения. Нужна отладка!\n")
   end
 end
 
 _C.checker = function(server)
   local ret = false
-  if not _C.ss_proc or _C.ss_proc:poll() then
-    _G.stderr:write"Проверка не выполняется, т.к. туннель не был поднят.\n"
+  local res = req{
+    url = "https://geo.censortracker.org/get-ip/plain",
+    proxy = "socks5://127.0.0.1:1080",
+  }
+  if res:match(server.meta.server_ip) then
+    ret = true
   else
-    local res = req{
-      url = "https://geo.censortracker.org/get-ip/plain",
-      proxy = "socks5://127.0.0.1:1080",
-    }
-    if res:match(server.meta.server_ip) then
-      ret = true
-    else
-      _G.stderr:write("Проверка провалилась!\n")
-    end
+    _G.stderr:write("\nПроверка провалилась!\n")
+    _G.stderr:write(("\nIP сервера из метаданных: %q\n"):format(server.meta.server_ip))
+    _G.stderr:write(("\nОтвет сервиса определения IP: %q\n"):format(res))
   end
   return ret
 end

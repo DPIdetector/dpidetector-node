@@ -9,6 +9,7 @@ local _C = {}
 local cfg_path = "/etc/wireguard/awg.conf"
 
 _C.proto = "amnezia-wireguard"
+_C.interface_name = "awg"
 
 _C.init = function()
   local fd = io.open(cfg_path, "r")
@@ -17,10 +18,9 @@ _C.init = function()
 end
 
 _C.connect = function(server)
-  wait() -- HACK: иногда остаётся висеть зомби wireguard-go от предыдущеего запуска
   if not server.domain then
     _G.stderr:write(
-      ("Запись о сервере %s не содержит информации о домене, который стоит использовать для подключения к нему")
+      ("\nЗапись о сервере %s не содержит информации о домене, который стоит использовать для подключения к нему\n")
       :format(tostring(server.name))
     )
     return false
@@ -91,44 +91,54 @@ _C.connect = function(server)
     stderr = _G.stderr,
   }
   if exitcode ~= 0 then
-    _C.failed = true
-    _G.stderr:write(("Проблема при инициализации! Код выхода: %d\n"):format(exitcode))
+    _G.stderr:write(("\nПроблема при инициализации! Код выхода: %d\n"):format(exitcode))
+    return false
   end
   sleep(2)
   return true
 end
 
 _C.disconnect = function(_server)
-  if not _C.failed then
-    local exitcode = sp.call{
-      "wg-quick",
-      "down",
-      "awg",
-      stdout = _G.stdout,
-      stderr = _G.stderr,
-    }
-    if exitcode ~= 0 then
-      _G.stderr:write(("Проблема при остановке! Код выхода: %d\n"):format(exitcode))
-    end
+  local exitcode = sp.call{
+    "wg-quick",
+    "down",
+    _C.interface_name,
+    stdout = _G.stdout,
+    stderr = _G.stderr,
+  }
+  if exitcode ~= 0 then
+    _G.stderr:write(("\nПроблема при остановке! Код выхода: %d\n"):format(exitcode))
   end
-  sleep(5)
-  wait()
+  local finished = false
+  local count = 0
+  repeat
+    local e = sp.call{
+      "sh",
+      "-c",
+      ("ip link show | grep -q awg"):format(_C.interface_name),
+    }
+    if e == 1 then finished = true end
+    count = count + 1
+    sleep(1)
+    wait()
+  until finished==true or count>=10
+  if finished == false then
+    io.stderr:write("\nПроблемы с завершением подключения (необходима отладка)\n")
+  end
 end
 
 _C.checker = function(server)
   local ret
-  if _C.failed then
-    _G.stderr:write"Проверка не выполняется, т.к. туннель не был поднят.\n"
+  local res = req{
+    url = ("http://%s:%d/"):format(server.meta.test_host, server.meta.test_port),
+    interface = _C.interface_name,
+  }
+  if res:match(server.meta.server_ip) then
+    ret = true
   else
-    local res = req{
-      url = ("http://%s:%d/"):format(server.meta.test_host, server.meta.test_port),
-      interface = "awg",
-    }
-    if res:match(server.meta.server_ip) then
-      ret = true
-    else
-      _G.stderr:write("Проверка провалилась!\n")
-    end
+    _G.stderr:write("\nПроверка провалилась!\n")
+    _G.stderr:write(("\nIP сервера из метаданных: %q\n"):format(server.meta.server_ip))
+    _G.stderr:write(("\nОтвет сервиса определения IP: %q\n"):format(res))
   end
   return ret
 end

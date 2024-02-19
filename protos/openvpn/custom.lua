@@ -10,6 +10,7 @@ local _C = {}
 local cfg_path = "/etc/openvpn/checker.conf"
 
 _C.proto = "openvpn"
+_C.interface_name = "ovpn"
 
 _C.init = function()
   local fd = io.open(cfg_path, "r")
@@ -20,7 +21,7 @@ end
 _C.connect = function(server)
   if not server.domain then
     _G.stderr:write(
-      ("Запись о сервере %s не содержит информации о домене, который стоит использовать для подключения к нему")
+      ("\nЗапись о сервере %s не содержит информации о домене, который стоит использовать для подключения к нему\n")
       :format(tostring(server.name))
     )
     return false
@@ -68,7 +69,13 @@ _C.connect = function(server)
     stderr = _G.stderr,
   }
   if not _C.ovpn_proc or _C.ovpn_proc:poll() then
-    _G.stderr:write(("Проблема при инициализации! Сообщение об ошибке: %s. Код: %d\n"):format(_E.errmsg, _E.errno))
+    _G.stderr:write(("\nПроблема при инициализации! Сообщение об ошибке: %s. Код: %d\n"):format(_E.errmsg, _E.errno))
+    if _C.ovpn_proc then
+      _C.ovpn_proc:kill()
+      _C.ovpn_proc = nil
+      wait()
+    end
+    return false
   end
   sleep(2)
   return true
@@ -78,26 +85,42 @@ _C.disconnect = function(_server)
   if _C.ovpn_proc then
     _C.ovpn_proc:terminate()
     _C.ovpn_proc:wait()
+    local finished = false
+    local count = 0
+    repeat
+      local e = sp.call{
+        "sh",
+        "-c",
+        ("ip link show | grep -q %s"):format(_C.interface_name),
+      }
+      if e == 1 then finished = true end
+      count = count + 1
+      sleep(1)
+      wait()
+    until finished==true or count>=10
+    if finished == false then
+      io.stderr:write("\nПроблемы с завершением подключения (необходима отладка)\n")
+    end
+    _C.ovpn_proc:kill()
     _C.ovpn_proc = nil
-    sleep(2)
     wait()
+  else
+    io.stderr:write("\nВызвана функция отключения, но что-то случилось c дескрипторами подключения. Нужна отладка!\n")
   end
 end
 
 _C.checker = function(server)
   local ret = false
-  if not _C.ovpn_proc or _C.ovpn_proc:poll() then
-    _G.stderr:write"Проверка не выполняется, т.к. туннель не был поднят.\n"
+  local res = req{
+    url = ("http://%s:%d/"):format(server.meta.test_host, server.meta.test_port),
+    interface = _C.interface_name,
+  }
+  if res:match(server.meta.server_ip) then
+    ret = true
   else
-    local res = req{
-      url = ("http://%s:%d/"):format(server.meta.test_host, server.meta.test_port),
-      interface = "ovpn",
-    }
-    if res:match(server.meta.server_ip) then
-      ret = true
-    else
-      _G.stderr:write("Проверка провалилась!\n")
-    end
+    _G.stderr:write("\nПроверка провалилась!\n")
+    _G.stderr:write(("\nIP сервера из метаданных: %q\n"):format(server.meta.server_ip))
+    _G.stderr:write(("\nОтвет сервиса определения IP: %q\n"):format(res))
   end
   return ret
 end
