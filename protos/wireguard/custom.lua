@@ -17,6 +17,7 @@ _C.init = function()
 end
 
 _C.connect = function(server)
+  wait() -- HACK: иногда остаётся висеть зомби wireguard-go от предыдущеего запуска
   if not server.domain then
     _G.stderr:write(
       ("Запись о сервере %s не содержит информации о домене, который стоит использовать для подключения к нему")
@@ -92,7 +93,7 @@ _C.disconnect = function(_server)
       _G.stderr:write(("Проблема при остановке! Код выхода: %d\n"):format(exitcode))
     end
   end
-  sleep(2)
+  sleep(5)
   wait()
 end
 
