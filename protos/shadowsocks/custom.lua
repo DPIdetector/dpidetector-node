@@ -49,7 +49,9 @@ _C.connect = function(server)
     _G.stderr:write(("\nПроблема при инициализации! Сообщение об ошибке: %s. Код: %d\n"):format(_E.errmsg, _E.errno))
     if _C.ss_proc then _C.ss_proc:kill() end
     _C.ss_proc = nil
+    if _G.DEBUG then _G.stderr:write("\n=== перед вызовом wait() ===\n") end
     wait()
+    if _G.DEBUG then _G.stderr:write("\n=== после вызова wait() ===\n") end
     return false
   end
   sleep(5)
@@ -62,7 +64,9 @@ _C.disconnect = function(_server)
     _C.ss_proc:wait()
     _C.ss_proc = nil
     sleep(2)
+    _G.stderr:write("\n=== перед вызовом wait() ===\n")
     wait()
+    _G.stderr:write("\n=== после вызова wait() ===\n")
   else
     io.stderr:write("\nВызвана функция отключения, но что-то случилось c дескрипторами подключения. Нужна отладка!\n")
   end

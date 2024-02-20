@@ -101,7 +101,9 @@ _C.connect = function(server)
     if _C.clk_proc then _C.clk_proc:kill() end
     _C.ss_proc = nil
     _C.clk_proc = nil
+    if _G.DEBUG then _G.stderr:write("\n=== перед вызовом wait() ===\n") end
     wait()
+    if _G.DEBUG then _G.stderr:write("\n=== после вызова wait() ===\n") end
     return false
   end
   sleep(3)
@@ -114,7 +116,9 @@ _C.disconnect = function(_server)
     _C.ss_proc:wait()
     _C.ss_proc = nil
     sleep(2)
+    if _G.DEBUG then _G.stderr:write("\n=== перед вызовом wait() ===\n") end
     wait()
+    if _G.DEBUG then _G.stderr:write("\n=== после вызова wait() ===\n") end
   else
     io.stderr:write(
       "\n[ShadowSocks] Вызвана функция отключения, но что-то случилось c дескрипторами подключения. Нужна отладка!\n"
@@ -125,7 +129,9 @@ _C.disconnect = function(_server)
     _C.clk_proc:wait()
     _C.clk_proc = nil
     sleep(2)
+    if _G.DEBUG then _G.stderr:write("\n=== перед вызовом wait() ===\n") end
     wait()
+    if _G.DEBUG then _G.stderr:write("\n=== после вызова wait() ===\n") end
   else
     io.stderr:write(
       "\n[Cloak] Вызвана функция отключения, но что-то случилось c дескрипторами подключения. Нужна отладка!\n"

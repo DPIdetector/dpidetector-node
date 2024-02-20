@@ -86,7 +86,7 @@ _C.connect = function(server)
   local exitcode = sp.call{
     "wg-quick",
     "up",
-    "awg",
+    _C.interface_name,
     stdout = _G.stdout,
     stderr = _G.stderr,
   }
@@ -94,7 +94,22 @@ _C.connect = function(server)
     _G.stderr:write(("\nПроблема при инициализации! Код выхода: %d\n"):format(exitcode))
     return false
   end
-  sleep(2)
+  local finished = false
+  local count = 0
+  repeat
+    local e = sp.call{
+      "sh",
+      "-c",
+      ("ip link show | grep -q %s"):format(_C.interface_name),
+    }
+    if e == 0 then finished = true end
+    count = count + 1
+    sleep(1)
+  until finished==true or count>=20
+  if finished == false then
+    io.stderr:write("\nПроблемы с настройкой подключения (необходима отладка)\n")
+    return false
+  end
   return true
 end
 
@@ -120,11 +135,29 @@ _C.disconnect = function(_server)
     if e == 1 then finished = true end
     count = count + 1
     sleep(1)
-    wait()
   until finished==true or count>=10
   if finished == false then
     io.stderr:write("\nПроблемы с завершением подключения (необходима отладка)\n")
   end
+  local zombies = true
+  count = 0
+  repeat
+    local e = sp.call{
+      "sh",
+      "-c",
+      "ps -o stat,pid,comm | grep -q '^Z'",
+    }
+    if e == 1 then zombies = false end
+    if zombies == true then
+      if _G.DEBUG then _G.stderr:write("\n=== перед вызовом wait() ===\n") end
+      wait()
+      if _G.DEBUG then _G.stderr:write("\n=== после вызова wait() ===\n") end
+    end
+      count = count + 1
+    until zombies==false or count>=20
+    if zombies == true then
+      io.stderr:write("\nПроблемы с очисткой дерева процессов (необходима отладка)\n")
+    end
 end
 
 _C.checker = function(server)
