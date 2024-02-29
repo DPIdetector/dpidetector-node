@@ -1,5 +1,8 @@
 local cURL = require"cURL"
 
+local log = require"checker.utils".logger
+local split = require"checker.utils".split
+
 return function(settings)
   if type(settings) ~= "table" then settings = {} end
   if not settings.url then error("Вызов функции запроса URL без указания самого URL 🤷") end
@@ -31,43 +34,46 @@ return function(settings)
 
   -- c:perform()
   if _G.DEBUG then
-    _G.stderr:write("\n====== URL запроса: ======\n")
-    _G.stderr:write(settings.url)
-    _G.stderr:write("\n======================\n")
+    log.debug"=== Подготовка к отправке запроса ==="
+    log.debug(("====== URL запроса: %s ======"):format(settings.url))
     if #hdr > 0 then
-      _G.stderr:write("\n====== Заголовки запроса: ======\n")
-        for k, v in pairs(hdr) do
-          _G.stderr:write(("%s: %s\n"):format(k, v))
+      log.debug"====== Заголовки запроса: ======"
+        for _, v in ipairs(hdr) do
+          log.debug(("%s"):format(v))
         end
-      _G.stderr:write("\n======================\n")
+      log.debug"======================"
     end
     if settings.post then
-      _G.stderr:write("\n====== Тело запроса: ======\n")
-      _G.stderr:write(settings.post)
-      _G.stderr:write("\n======================\n")
+      log.debug"====== Тело запроса: ======"
+      log.debug(("%s"):format(settings.post))
+      log.debug"======================"
     end
-    _G.stderr:write("(выполнение запроса начато)")
+    log.debug"=== выполнение запроса начато ==="
   end
 
   local success, errmsg = pcall(c.perform, c)
   if not success then
-    _G.stderr:write(errmsg)
+    log.error(("Ошибка при выполнении запроса: %q"):format(errmsg))
     return errmsg
   end
 
   c:close()
 
-  local ret = table.concat(wbuf)
-  if _G.DEBUG then
-    _G.stderr:write("(выполнение запроса завершено)")
-    _G.stderr:write("\n====== Заголовки ответа: ======\n")
-    _G.stderr:write(table.concat(hbuf))
-    _G.stderr:write("\n======================\n")
+  local ret = table.concat(wbuf):gsub("[\r\n]*$", "")
+  log.debug"=== выполнение запроса завершено ==="
+  log.debug"====== Заголовки ответа: ======"
+  for _, v in ipairs(
+    split(
+      table.concat(hbuf or {})
+        :gsub("[\r\n]*$", ""),
+      "\n"
+    )
+  ) do
+    log.debug(("%s"):format(v))
   end
-  if _G.VERBOSE or _G.DEBUG then
-    _G.stderr:write("\n====== Тело ответа: ======\n")
-    _G.stderr:write(ret)
-    _G.stderr:write("\n===================\n")
-  end
+  log.debug"======================"
+  log.verbose"====== Тело ответа: ======"
+  log.verbose(("%s"):format(ret))
+  log.verbose"==================="
   return ret
 end

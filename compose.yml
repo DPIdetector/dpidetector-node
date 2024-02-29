@@ -1,7 +1,7 @@
 services:
   cloak:
-    # image: ghcr.io/roskomsvoboda/dpidetector-cloak
-    image: roskomsvoboda/dpidetector-cloak
+    # image: ghcr.io/dpidetector/dpidetector-cloak
+    image: dpidetector/dpidetector-cloak
     build:
       context: .
       dockerfile: ./protos/cloak/Dockerfile
@@ -12,8 +12,8 @@ services:
     restart: on-failure:3
 
   shadowsocks:
-    # image: ghcr.io/roskomsvoboda/dpidetector-shadowsocks
-    image: roskomsvoboda/dpidetector-shadowsocks
+    # image: ghcr.io/dpidetector/dpidetector-shadowsocks
+    image: dpidetector/dpidetector-shadowsocks
     build:
       context: .
       dockerfile: ./protos/shadowsocks/Dockerfile
@@ -24,8 +24,8 @@ services:
     restart: on-failure:3
 
   amnezia-wireguard:
-    # image: ghcr.io/roskomsvoboda/dpidetector-amnezia-wireguard
-    image: roskomsvoboda/dpidetector-amnezia-wireguard
+    # image: ghcr.io/dpidetector/dpidetector-amnezia-wireguard
+    image: dpidetector/dpidetector-amnezia-wireguard
     build:
       context: .
       dockerfile: ./protos/amnezia-wireguard/Dockerfile
@@ -40,8 +40,8 @@ services:
     restart: on-failure:3
 
   wireguard:
-    # image: ghcr.io/roskomsvoboda/dpidetector-wireguard
-    image: roskomsvoboda/dpidetector-wireguard
+    # image: ghcr.io/dpidetector/dpidetector-wireguard
+    image: dpidetector/dpidetector-wireguard
     build:
       context: .
       dockerfile: ./protos/wireguard/Dockerfile
@@ -54,8 +54,8 @@ services:
     restart: on-failure:3
 
   openvpn-tlscrypt:
-    # image: ghcr.io/roskomsvoboda/dpidetector-openvpn-tlscrypt
-    image: roskomsvoboda/dpidetector-openvpn-tlscrypt
+    # image: ghcr.io/dpidetector/dpidetector-openvpn-tlscrypt
+    image: dpidetector/dpidetector-openvpn-tlscrypt
     build:
       context: .
       dockerfile: ./protos/openvpn-tlscrypt/Dockerfile
@@ -70,8 +70,8 @@ services:
     restart: on-failure:3
 
   openvpn:
-    # image: ghcr.io/roskomsvoboda/dpidetector-openvpn
-    image: roskomsvoboda/dpidetector-openvpn
+    # image: ghcr.io/dpidetector/dpidetector-openvpn
+    image: dpidetector/dpidetector-openvpn
     build:
       context: .
       dockerfile: ./protos/openvpn/Dockerfile

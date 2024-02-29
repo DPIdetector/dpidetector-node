@@ -19,8 +19,8 @@ RUN apk add shadowsocks-libev --repository=http://dl-cdn.alpinelinux.org/alpine/
     curl -L https://github.com/cbeuw/Cloak/releases/download/${CLOAK_RELEASE}/ck-client-linux-${CK_ARCH}-${CLOAK_RELEASE} -o /usr/bin/ck-client; chmod +x /usr/bin/ck-client
 
 # WARN: don't forget that all paths are relative to the root of the repo
+ADD --link ./protos/cloak/ckclient.json /etc/ckclient.json
 ADD --link ./checker /usr/share/lua/5.1/checker
 ADD --link ./protos/cloak/custom.lua /usr/share/lua/5.1/checker/custom.lua
-ADD --link ./protos/cloak/ckclient.json /etc/ckclient.json
 
 CMD ["luajit", "-e", "require'checker'.init()"]
