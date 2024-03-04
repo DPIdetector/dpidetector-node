@@ -83,13 +83,12 @@ _C.connect = function(server)
   end
   sleep(2)
   _C.ss_proc, _E.errmsg, _E.errno = sp.popen{
-    "/usr/bin/ss-local",
-    "-s", "127.0.0.1",
-    "-p", "1984",
+    "/usr/bin/sslocal",
+    "-s", "127.0.0.1:1984",
     "-k", server.meta.ss_password,
-    "-l", "1080",
+    "-b", "127.0.0.1:1080",
     "-m", server.meta.ss_encryption,
-    "-t", "60",
+    "--timeout", "60",
     stdout = _G.stdout,
     stderr = _G.stderr,
   }

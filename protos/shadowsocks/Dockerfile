@@ -1,8 +1,7 @@
-FROM alpine:edge
+FROM alpine:latest
 
-# TODO: move to rust shadowsocks implementation (supports SS2022 + don't require testing repo)
-RUN apk add --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing \
-  shadowsocks-libev \
+RUN apk add \
+  shadowsocks-rust-sslocal \
   lua5.1-cjson \
   lua5.1-curl \
   lua5.1-subprocess \

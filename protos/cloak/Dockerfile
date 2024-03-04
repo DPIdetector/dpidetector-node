@@ -2,10 +2,10 @@ FROM alpine:latest
 
 ARG TARGETARCH
 
-ARG CLOAK_RELEASE="v2.7.0"
+ARG CLOAK_RELEASE="v2.8.0"
 
-# TODO: move to rust shadowsocks implementation (supports SS2022 + don't require testing repo)
-RUN apk add shadowsocks-libev --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing curl \
+RUN apk add curl \
+  shadowsocks-rust-sslocal \
   lua5.1-cjson \
   lua5.1-curl \
   lua5.1-subprocess \
@@ -16,7 +16,10 @@ RUN apk add shadowsocks-libev --repository=http://dl-cdn.alpinelinux.org/alpine/
     elif [ ${TARGETARCH}="arm32*" ]; then CK_ARCH="arm"; \
     else CK_ARCH=${TARGETARCH}; \
   fi && \
-    curl -L https://github.com/cbeuw/Cloak/releases/download/${CLOAK_RELEASE}/ck-client-linux-${CK_ARCH}-${CLOAK_RELEASE} -o /usr/bin/ck-client; chmod +x /usr/bin/ck-client
+    curl -L \
+      https://github.com/cbeuw/Cloak/releases/download/${CLOAK_RELEASE}/ck-client-linux-${CK_ARCH}-${CLOAK_RELEASE} \
+    -o /usr/bin/ck-client; \
+    chmod +x /usr/bin/ck-client
 
 # WARN: don't forget that all paths are relative to the root of the repo
 ADD --link ./protos/cloak/ckclient.json /etc/ckclient.json

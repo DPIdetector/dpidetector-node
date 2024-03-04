@@ -37,13 +37,12 @@ _C.connect = function(server)
   end
   local _E = {}
   _C.ss_proc, _E.errmsg, _E.errno = sp.popen{
-    "/usr/bin/ss-local",
-    "-s", server.meta.server_ip,
-    "-p", server.meta.port,
+    "/usr/bin/sslocal",
+    "-s", ("%s:%d"):format(server.meta.server_ip, server.meta.port),
     "-k", server.meta.password,
-    "-l", "1080",
+    "-b", "127.0.0.1:1080",
     "-m", server.meta.encryption,
-    "-t", "60",
+    "--timeout", "60",
     stdout = _G.stdout,
     stderr = _G.stderr,
   }
