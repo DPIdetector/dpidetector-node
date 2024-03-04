@@ -103,6 +103,14 @@ while true do
   for _, server in ipairs(servers) do
     log.verbose"=== Итерация цикла проверки серверов начата ==="
     local conn = custom.connect(server)
+
+    local report = {
+      server_name = tostring(server.name),
+      protocol = tostring(_G.proto),
+      node_name = tostring(_G.nodename),
+      -- log = log_fd:read"*a" -- :lines() --- TODO:
+    }
+
     if conn then
       log.verbose"=== Функция установки соединения завершилась успешно ==="
       log.verbose"=== Запуск функции проверки доступности ==="
@@ -111,16 +119,20 @@ while true do
       custom.disconnect(server)
       local available = not(not(result))
 
-      local report = {
-        server_name = tostring(server.name),
-        protocol = tostring(_G.proto),
-        available = available,
-        node_name = tostring(_G.nodename),
-        -- log = log_fd:read"*a" -- :lines() --- TODO:
-      }
+      report.available = available or false
 
       log.verbose"=== Отправка отчёта ==="
       log.verbose(("=== (%sблокируется) ==="):format(available and "не " or ""))
+      req{
+        url = reports_endpoint,
+        post = json.encode(report),
+        headers = {
+          ("Token: %s"):format(_G.token),
+          "Content-Type: application/json",
+        },
+      }
+    else
+      report.available = false
       req{
         url = reports_endpoint,
         post = json.encode(report),
