@@ -11,11 +11,12 @@ RUN apk add curl \
   lua5.1-subprocess \
   luajit \
   ; \
-  if [ ${TARGETARCH}="i386" ]; then CK_ARCH="386"; \
-    elif [ ${TARGETARCH}="arm64v8" ]; then CK_ARCH="arm64"; \
-    elif [ ${TARGETARCH}="arm32*" ]; then CK_ARCH="arm"; \
-    else CK_ARCH=${TARGETARCH}; \
-  fi && \
+  case "${TARGETARCH}" in \
+    i386) CK_ARCH="386" ;; \
+    arm64v8) CK_ARCH="arm64" ;; \
+    arm32*) CK_ARCH="arm" ;; \
+    *) CK_ARCH=${TARGETARCH} ;; \
+  esac && \
     curl -L \
       https://github.com/cbeuw/Cloak/releases/download/${CLOAK_RELEASE}/ck-client-linux-${CK_ARCH}-${CLOAK_RELEASE} \
     -o /usr/bin/ck-client; \
