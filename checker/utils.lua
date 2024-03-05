@@ -99,7 +99,7 @@ _U.logger = {
   end,
   verbose = function(text, opts)
     if _G.VERBOSE or _G.DEBUG then
-    log{level = "error", text = text, opts = opts}
+    log{level = "verbose", text = text, opts = opts}
     end
   end,
   debug = function(text, opts)
