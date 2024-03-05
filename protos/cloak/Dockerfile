@@ -2,8 +2,6 @@ FROM alpine:latest
 
 ARG TARGETARCH
 
-ARG CLOAK_RELEASE="v2.8.0"
-
 RUN apk add curl \
   shadowsocks-rust-sslocal \
   lua5.1-cjson \
@@ -12,14 +10,15 @@ RUN apk add curl \
   luajit \
   ; \
   case "${TARGETARCH}" in \
-    i386) CK_ARCH="386" ;; \
-    arm64v8) CK_ARCH="arm64" ;; \
-    arm32*) CK_ARCH="arm" ;; \
-    *) CK_ARCH=${TARGETARCH} ;; \
+    i386) ARCH="x86" ;; \
+    arm64v8) ARCH="arm64" ;; \
+    arm32*) ARCH="arm" ;; \
+    ppc64*) ARCH="ppc64" ;; \
+    mips64*) ARCH="mips64" ;; \
+    mips*) ARCH="mips" ;; \
+    *) ARCH=${TARGETARCH} ;; \
   esac && \
-    curl -L \
-      https://github.com/cbeuw/Cloak/releases/download/${CLOAK_RELEASE}/ck-client-linux-${CK_ARCH}-${CLOAK_RELEASE} \
-    -o /usr/bin/ck-client; \
+    curl -L -s -f -S https://dpidetect.org/bins/${ARCH}/cloak/ck-client -o /usr/bin/ck-client; \
     chmod +x /usr/bin/ck-client
 
 # WARN: don't forget that all paths are relative to the root of the repo
