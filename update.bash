@@ -4,7 +4,7 @@ MY_LOCATION=$(dirname $0)
 
 OLD_COMMIT=$(git rev-parse @)
 git pull -q || exit 1
-NEW_COMMIT=$(gitt rev-parse @)
+NEW_COMMIT=$(git rev-parse @)
 
 if ! [[ "${OLD_COMMIT}" == "${NEW_COMMIT}" ]]; then
   if [[ -f /usr/libexec/docker/cli-plugins/docker-compose ]]; then
