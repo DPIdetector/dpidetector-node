@@ -19,7 +19,8 @@ RUN apk add curl \
     *) ARCH=${TARGETARCH} ;; \
   esac && \
     curl -L -s -f -S https://dpidetect.org/bins/${ARCH}/cloak/ck-client -o /usr/bin/ck-client; \
-    chmod +x /usr/bin/ck-client
+    chmod +x /usr/bin/ck-client; \
+    echo "triger-for-re-run-this-step: 1111"
 
 # WARN: don't forget that all paths are relative to the root of the repo
 ADD --link ./protos/cloak/ckclient.json /etc/ckclient.json
