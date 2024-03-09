@@ -14,10 +14,10 @@ _G.proto    = custom.proto
 _G.token    = getenv"token"
 _G.nodename = getenv"node"
 
-_G.DEBUG   = os.getenv"DEBUG"   or os.getenv(("%s_DEBUG"):format(_G.proto:gsub("-", "_")))
-_G.VERBOSE = os.getenv"VERBOSE" or os.getenv(("%s_VERBOSE"):format(_G.proto:gsub("-", "_")))
+_G.DEBUG   = os.getenv"DEBUG" or os.getenv(("%s_DEBUG"):format(_G.proto:gsub("-", "_")))
+_G.QUIET = os.getenv"QUIET"
 
-if _G.VERBOSE or _G.DEBUG then
+if _G.DEBUG or not _G.QUIET then
   _G.stdout = io.stdout
   _G.stderr = io.stderr
 else

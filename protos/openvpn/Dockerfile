@@ -8,7 +8,7 @@ RUN apk add \
   lua5.1-subprocess \
   luajit \
   ; \
-  echo "triger-for-re-run-this-step: 1111"
+  echo "trigger-for-re-running-this-step: 1111"
 # openvpn-openrc
 
 # WARN: don't forget that all paths are relative to the root of the repo

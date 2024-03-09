@@ -98,7 +98,7 @@ _U.logger = {
     log{level = "info", text = text, opts = opts}
   end,
   verbose = function(text, opts)
-    if _G.VERBOSE or _G.DEBUG then
+    if _G.DEBUG or not _G.QUIET then
     log{level = "verbose", text = text, opts = opts}
     end
   end,
