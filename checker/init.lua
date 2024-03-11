@@ -81,12 +81,12 @@ while true do
       if not ok then
         log.error"Проблема со списком серверов (при частом повторении - попробуйте включить режим отладки)"
         log.verbose"(Не получается десериализовать JSON со списком серверов)"
-        log.verbose"====== Результат запроса: ======"
-        log.verbose(servers_fetched)
-        log.verbose"=================="
-        log.verbose"====== Результат попытки десериализации: ======"
-        log.verbose(e)
-        log.verbose"=================="
+        log.debug"====== Результат запроса: ======"
+        log.debug(servers_fetched)
+        log.debug"=================="
+        log.debug"====== Результат попытки десериализации: ======"
+        log.debug(e)
+        log.debug"=================="
       else
         servers = e
       end
@@ -94,9 +94,9 @@ while true do
       log.error"Не удалось связаться с бекендом"
       log.error"Если данное сообщение имеет разовый характер - можно игнорировать"
       log.error"Если появляется при каждой итерации проверки - включите режим отладки и проверьте причину"
-      log.verbose"====== Результат запроса: ======"
-      log.verbose(servers_fetched)
-      log.verbose"=================="
+      log.debug"====== Результат запроса: ======"
+      log.debug(servers_fetched)
+      log.debug"=================="
     end
   end
 

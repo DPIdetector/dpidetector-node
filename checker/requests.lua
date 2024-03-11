@@ -32,6 +32,9 @@ return function(settings)
   c:setopt_url(settings.url)
   c:setopt_writefunction(function(chunk) table.insert(wbuf, chunk) end)
 
+  c:setopt_timeout(settings.timeout or 10)
+  c:setopt_connecttimeout(settings.connect_timeout or 10)
+
   -- c:perform()
   if _G.DEBUG then
     log.debug"=== Подготовка к отправке запроса ==="
@@ -72,8 +75,8 @@ return function(settings)
     log.debug(("%s"):format(v))
   end
   log.debug"======================"
-  log.verbose"====== Тело ответа: ======"
-  log.verbose(("%s"):format(ret))
-  log.verbose"==================="
+  log.debug"====== Тело ответа: ======"
+  log.debug(("%s"):format(ret))
+  log.debug"==================="
   return ret
 end
