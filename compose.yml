@@ -9,7 +9,8 @@ services:
       - "user.conf"
     logging:
       driver: json-file
-    restart: on-failure:3
+    # restart: on-failure:3
+    restart: always
 
   shadowsocks:
     # image: ghcr.io/dpidetector/dpidetector-shadowsocks
@@ -21,7 +22,8 @@ services:
       - "user.conf"
     logging:
       driver: json-file
-    restart: on-failure:3
+    # restart: on-failure:3
+    restart: always
 
   amnezia-wireguard:
     # image: ghcr.io/dpidetector/dpidetector-amnezia-wireguard
@@ -37,7 +39,8 @@ services:
       - /dev/net/tun:/dev/net/tun
     cap_add:
       - NET_ADMIN
-    restart: on-failure:3
+    # restart: on-failure:3
+    restart: always
 
   wireguard:
     # image: ghcr.io/dpidetector/dpidetector-wireguard
@@ -53,7 +56,8 @@ services:
       - /dev/net/tun:/dev/net/tun
     cap_add:
       - NET_ADMIN
-    restart: on-failure:3
+    # restart: on-failure:3
+    restart: always
 
   openvpn-tlscrypt:
     # image: ghcr.io/dpidetector/dpidetector-openvpn-tlscrypt
@@ -69,7 +73,8 @@ services:
       - /dev/net/tun:/dev/net/tun
     cap_add:
       - NET_ADMIN
-    restart: on-failure:3
+    # restart: on-failure:3
+    restart: always
 
   openvpn:
     # image: ghcr.io/dpidetector/dpidetector-openvpn
@@ -85,4 +90,5 @@ services:
       - /dev/net/tun:/dev/net/tun
     cap_add:
       - NET_ADMIN
-    restart: on-failure:3
+    # restart: on-failure:3
+    restart: always
