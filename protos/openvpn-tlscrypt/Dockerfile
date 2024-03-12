@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 FROM alpine:latest
 
 ARG TARGETARCH
