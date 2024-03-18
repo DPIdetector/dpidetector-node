@@ -43,8 +43,8 @@ _C.connect = function(server)
     "-b", "127.0.0.1:1080",
     "-m", server.meta.encryption,
     "--timeout", "60",
-    stdout = _G.stdout,
-    stderr = _G.stderr,
+    stdout = _G.log_fd or _G.stdout,
+    stderr = _G.log_fd or _G.stderr,
   }
   if not _C.ss_proc or _C.ss_proc:poll() then
     log.error(("Проблема при инициализации! Сообщение об ошибке: %s. Код: %d"):format(_E.errmsg, _E.errno))

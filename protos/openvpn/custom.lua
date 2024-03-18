@@ -67,8 +67,8 @@ _C.connect = function(server)
     "openvpn",
     "--config",
     cfg_path,
-    stdout = _G.stdout,
-    stderr = _G.stderr,
+    stdout = _G.log_fd or _G.stdout,
+    stderr = _G.log_fd or _G.stderr,
   }
   if not _C.ovpn_proc or _C.ovpn_proc:poll() then
     log.error(("Проблема при инициализации! Сообщение об ошибке: %s. Код: %d"):format(_E.errmsg, _E.errno))

@@ -71,8 +71,8 @@ _C.connect = function(server)
     "/usr/bin/ck-client",
     "-s", server.meta.server_ip,
     "-c", cfg_path,
-    stdout = _G.stdout,
-    stderr = _G.stderr,
+    stdout = _G.log_fd or _G.stdout,
+    stderr = _G.log_fd or _G.stderr,
   }
   if not _C.clk_proc or _C.clk_proc:poll() then
     log.error(
@@ -89,8 +89,8 @@ _C.connect = function(server)
     "-b", "127.0.0.1:1080",
     "-m", server.meta.ss_encryption,
     "--timeout", "60",
-    stdout = _G.stdout,
-    stderr = _G.stderr,
+    stdout = _G.log_fd or _G.stdout,
+    stderr = _G.log_fd or _G.stderr,
   }
   if not _C.ss_proc or _C.ss_proc:poll() then
     log.error(

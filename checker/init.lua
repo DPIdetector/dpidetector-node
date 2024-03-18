@@ -21,10 +21,13 @@ if _G.DEBUG or not _G.QUIET then
   _G.stdout = io.stdout
   _G.stderr = io.stderr
 else
-  _G.devnull = io.output("/dev/null")
   _G.stdout  = _G.devnull
   _G.stderr  = _G.devnull
 end
+_G.devnull = io.output("/dev/null")
+
+local log_fn = "/tmp/log"
+_G.log_fd = _G.devnull
 
 log.verbose"=== Запуск приложения ==="
 
@@ -101,14 +104,14 @@ while true do
   end
 
   for _, server in ipairs(servers) do
-    log.verbose"=== Итерация цикла проверки серверов начата ==="
+    _G.log_fd = io.open(log_fn, "w+")
+    log.verbose(("=== Итерация цикла проверки сервера %s начата ==="):format(server.name))
     local conn = custom.connect(server)
 
     local report = {
       server_name = tostring(server.name),
       protocol = tostring(_G.proto),
       node_name = tostring(_G.nodename),
-      -- log = log_fd:read"*a" -- :lines() --- TODO:
     }
 
     if conn then
@@ -123,6 +126,12 @@ while true do
 
       log.verbose"=== Отправка отчёта ==="
       log.verbose(("=== (%sблокируется) ==="):format(available and "не " or ""))
+
+      _G.log_fd:flush()
+      _G.log_fd:seek"set"
+
+      report.log = _G.log_fd:read"*a"
+
       req{
         url = reports_endpoint,
         post = json.encode(report),
@@ -142,7 +151,8 @@ while true do
         },
       }
     end
-    log.verbose"=== Итерация цикла проверки серверов завершена ==="
+    log.verbose(("=== Итерация цикла проверки сервера %s завершена ==="):format(server.name))
+    _G.log_fd = _G.devnull
   end
   log.verbose"=== Итерация главного цикла начата ==="
   log.verbose(("=== Ожидание следующей итерации цикла проверки (%d секунд) ==="):format(interval))

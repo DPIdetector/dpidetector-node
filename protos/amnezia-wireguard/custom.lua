@@ -89,8 +89,8 @@ _C.connect = function(server)
     "wg-quick",
     "up",
     _C.interface_name,
-    stdout = _G.stdout,
-    stderr = _G.stderr,
+    stdout = _G.log_fd or _G.stdout,
+    stderr = _G.log_fd or _G.stderr,
   }
   if exitcode ~= 0 then
     log.error(("Проблема при инициализации! Код выхода: %d"):format(exitcode))
@@ -124,8 +124,8 @@ _C.disconnect = function(_server)
     "wg-quick",
     "down",
     _C.interface_name,
-    stdout = _G.stdout,
-    stderr = _G.stderr,
+    stdout = _G.log_fd or _G.stdout,
+    stderr = _G.log_fd or _G.stderr,
   }
   if exitcode ~= 0 then
     log.error(("Проблема при остановке! Код выхода: %d"):format(exitcode))

@@ -52,7 +52,8 @@ end
 
 local function gettime()
   local date_t = os.date"*t"
-  return ("%.02d/%.02d/%.02d %.02d:%.02d:%.02d"):format(date_t.day, date_t.month, date_t.year, date_t.hour, date_t.min, date_t.sec)
+  return ("%.02d/%.02d/%.02d %.02d:%.02d:%.02d")
+    :format(date_t.day, date_t.month, date_t.year, date_t.hour, date_t.min, date_t.sec)
   -- return (("%day%/%month%/%year% %hour%:%min%:%sec%"):gsub("%%(%w+)%%",os.date('*t')))
 end
 
@@ -69,10 +70,10 @@ local function log(t)
     debug = "D",
     verbose = "V",
   }
-  local fd = t.fd or fds[t.level] or _G.stderr
+  local console_fd = t.fd or fds[t.level] or _G.stderr
+  local logfile_fd = _G.log_fd
 
-  fd:write(
-    tpl:format(
+  local logrecord = tpl:format(
       table.unpack(fmt or {
         _G.proto,
         t.sign or lvl[t.level] or "?",
@@ -80,7 +81,17 @@ local function log(t)
         tostring(t.text)
       })
     )
-  )
+  local log_to_console = {
+    error = true,
+    warning = true,
+    info = true,
+    verbose = not(_G.QUIET) or not(not(_G.DEBUG)) or false,
+    debug = not(not(_G.DEBUG)) or false,
+  }
+  if log_to_console[t.level] then
+    console_fd:write(logrecord)
+  end
+  logfile_fd:write(logrecord)
 end
 
 _U.logger = {
@@ -98,14 +109,10 @@ _U.logger = {
     log{level = "info", text = text, opts = opts}
   end,
   verbose = function(text, opts)
-    if _G.DEBUG or not _G.QUIET then
     log{level = "verbose", text = text, opts = opts}
-    end
   end,
   debug = function(text, opts)
-    if _G.DEBUG then
     log{level = "debug", text = text, opts = opts}
-    end
   end,
   raw = log,
 }
