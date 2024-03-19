@@ -153,6 +153,7 @@ _C.disconnect = function(_server)
   else
     log.error"Вызвана функция отключения, но что-то случилось c дескрипторами подключения. Необходима отладка!"
   end
+  sleep(3)
 end
 
 _C.checker = function(server)
