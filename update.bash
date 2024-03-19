@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MY_LOCATION=$(dirname $0)
+cd $(dirname $0)
 
 OLD_COMMIT=$(git rev-parse @)
 git pull -q || exit 1
