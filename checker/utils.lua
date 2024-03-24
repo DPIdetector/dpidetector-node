@@ -57,30 +57,143 @@ local function gettime()
   -- return (("%day%/%month%/%year% %hour%:%min%:%sec%"):gsub("%%(%w+)%%",os.date('*t')))
 end
 
+local function cmds_to_ansi(str)
+  local seqs = {
+    reset           = "\27[0m",
+    normal          = "\27[0m",
+    bold            = "\27[1m",
+    bright          = "\27[1m",
+    dim             = "\27[2m",
+    italic          = "\27[3m",
+    underline       = "\27[4m",
+    blink           = "\27[5m",
+    rapidblink      = "\27[6m",
+    reverse         = "\27[7m",
+    invert          = "\27[7m",
+    hide            = "\27[8m",
+    strikethrough   = "\27[9m",
+
+    font0           = "\27[10m",
+    font1           = "\27[11m",
+    font2           = "\27[12m",
+    font3           = "\27[13m",
+    font4           = "\27[14m",
+    font5           = "\27[15m",
+    font6           = "\27[16m",
+    font7           = "\27[17m",
+    font8           = "\27[18m",
+    font9           = "\27[19m",
+
+    fraktur         = "\27[20m",
+    gothic          = "\27[20m",
+
+    dblunder        = "\27[21m",
+    nobold          = "\27[22m",
+    nodim           = "\27[22m",
+    noitalic        = "\27[23m",
+    nounderline     = "\27[24m",
+    noblink         = "\27[25m",
+    propspc         = "\27[26m",
+    noreverse       = "\27[27m",
+    noinvert        = "\27[27m",
+    nohide          = "\27[28m",
+    reveal          = "\27[28m",
+    nostrike        = "\27[29m",
+
+    black           = "\27[30m",
+    red             = "\27[31m",
+    green           = "\27[32m",
+    yellow          = "\27[33m",
+    blue            = "\27[34m",
+    magenta         = "\27[35m",
+    cyan            = "\27[36m",
+    white           = "\27[37m",
+    fg_256          = "\27[38;5;__C__m",
+    fg_rgb          = "\27[38;2;__R__;__G__;__B__m",
+    fg_default      = "\27[39m",
+
+    blackbg         = "\27[40m",
+    redbg           = "\27[41m",
+    greenbg         = "\27[42m",
+    yellowbg        = "\27[43m",
+    bluebg          = "\27[44m",
+    magentabg       = "\27[45m",
+    cyanbg          = "\27[46m",
+    whitebg         = "\27[47m",
+    bg_256          = "\27[48;5;__C__m",
+    bg_rgb          = "\27[48;2;__R__;__G__;__B__m",
+    bg_default      = "\27[49m",
+
+    nopropspc       = "\27[50m",
+    frame           = "\27[51m",
+    circle          = "\27[52m",
+    overline        = "\27[53m",
+    noframe         = "\27[54m",
+    nocircle        = "\27[54m",
+    nooverline      = "\27[55m",
+    undercolor_256  = "\27[58;5;__C__m",
+    undercolor_rgb  = "\27[58;2;__R__;__G__;__B__m",
+    undercolor_def  = "\27[59m",
+
+    superscript     = "\27[73m",
+    subscript       = "\27[74m",
+    nosuper         = "\27[75m",
+
+    brightblack     = "\27[90m",
+    brightred       = "\27[91m",
+    brightgreen     = "\27[92m",
+    brightyellow    = "\27[93m",
+    brightblue      = "\27[94m",
+    brightmagenta   = "\27[95m",
+    brightcyan      = "\27[96m",
+    brightwhite     = "\27[97m",
+
+    brightblackbg   = "\27[90m",
+    brightredbg     = "\27[91m",
+    brightgreenbg   = "\27[92m",
+    brightyellowbg  = "\27[93m",
+    brightbluebg    = "\27[94m",
+    brightmagentabg = "\27[95m",
+    brightcyanbg    = "\27[96m",
+    brightwhitebg   = "\27[97m",
+  }
+  local function parse_cmds(str)
+    local buffer = {}
+    for word in str:gmatch("[%w:_]+") do
+      local seq
+      if word:match":" then
+        local C, R, G, B
+        local cmd = word:gsub(":.+", "")
+        local pat = seqs[cmd]
+        if cmd:match"_256$" then
+          C = word:match":([^:]+)$"
+        elseif cmd:match"_rgb$" then
+          R, G, B = word:match":([^:]+):([^:]+):([^:]+)$"
+        end
+        seq = pat:gsub("__([CRGB])__", {C=C, R=R, G=G, B=B})
+      else
+        seq = seqs[word] or ""
+      end
+      table.insert(buffer, seq)
+    end
+    return table.concat(buffer)
+  end
+  return (str:gsub("(%%{(.-)})", function(_, str) return parse_cmds(str) end))
+end
+
 local function log(t)
-  local tpl = t.template or "%s [%s] | %s | %s\n"
-  local fmt = t.format
+  local o = t.opts or {}
+  local tpl = o.template or "%s%s [%s] | %s | %s%s\n"
   local fds = {
     info = _G.stdout,
   }
-  local lvl = {
+  local signs = {
     error = "E",
     warning = "W",
     info = "I",
     debug = "D",
     verbose = "V",
   }
-  local console_fd = t.fd or fds[t.level] or _G.stderr
-  local logfile_fd = _G.log_fd
-
-  local logrecord = tpl:format(
-      table.unpack(fmt or {
-        _G.proto,
-        t.sign or lvl[t.level] or "?",
-        gettime(),
-        tostring(t.text)
-      })
-    )
   local log_to_console = {
     error = true,
     warning = true,
@@ -88,7 +201,53 @@ local function log(t)
     verbose = not(_G.QUIET) or not(not(_G.DEBUG)) or false,
     debug = not(not(_G.DEBUG)) or false,
   }
-  if log_to_console[t.level] then
+  local colors = o.colors or {
+    error = "%{red fg_rgb:250:20:20 bold}",
+    warning = "%{yellow fg_rgb:250:250:20 bold}",
+    info = "%{green}",
+    verbose = "%{magenta}",
+    debug = "%{cyan}",
+    reset = "%{reset}",
+    bold = "%{bold}",
+  }
+  local console_fd = o.fd or fds[t.level] or _G.stderr
+  local logfile_fd = _G.log_fd
+  local function handle_newlines(str)
+    local s = tostring(str)
+    local nl_tpl = o.nl_tpl or "%s [%s] | %s | "
+    local nl_fmt = o.nl_fmt or {
+      _G.proto,
+      o.sign or signs[t.level] or "?",
+      gettime(),
+    }
+    return (
+      s
+      :gsub(
+        "\n",
+        ("\n%s")
+        :format(nl_tpl)
+        :format(
+          table.unpack(nl_fmt)
+        )
+      )
+      :gsub("\r","")
+    )
+  end
+  local fmt = o.format or {
+    colors[t.level] or "",
+    _G.proto,
+    o.sign or signs[t.level] or "?",
+    gettime(),
+    handle_newlines(t.text or ""),
+    colors.reset or "",
+  }
+
+  local logrecord = cmds_to_ansi(
+    tpl:format(
+      table.unpack(fmt)
+    )
+  )
+  if o.force_console or log_to_console[t.level] then
     console_fd:write(logrecord)
   end
   logfile_fd:write(logrecord)
@@ -97,8 +256,6 @@ end
 _U.logger = {
   --- TODO:
   --- - json-логгирование?
-  --- - в файл внутри контейнера? С очисткой после отправки?
-  --- (цель - отправка на бекенд, чтобы оптимизировать процесс)
   error = function(text, opts)
     log{level = "error", text = text, opts = opts}
   end,

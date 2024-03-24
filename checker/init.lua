@@ -104,8 +104,10 @@ while true do
   end
 
   for _, server in ipairs(servers) do
-    _G.log_fd = io.open(log_fn, "w+")
     log.verbose(("=== Итерация цикла проверки сервера %s начата ==="):format(server.name))
+
+    _G.log_fd = io.open(log_fn, "w+")
+
     local conn = custom.connect(server)
 
     local report = {
@@ -142,6 +144,12 @@ while true do
       }
     else
       report.available = false
+
+      _G.log_fd:flush()
+      _G.log_fd:seek"set"
+
+      report.log = _G.log_fd:read"*a"
+
       req{
         url = reports_endpoint,
         post = json.encode(report),
@@ -151,8 +159,9 @@ while true do
         },
       }
     end
-    log.verbose(("=== Итерация цикла проверки сервера %s завершена ==="):format(server.name))
+    _G.log_fd:close()
     _G.log_fd = _G.devnull
+    log.verbose(("=== Итерация цикла проверки сервера %s завершена ==="):format(server.name))
   end
   log.verbose"=== Итерация главного цикла начата ==="
   log.verbose(("=== Ожидание следующей итерации цикла проверки (%d секунд) ==="):format(interval))

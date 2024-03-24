@@ -170,7 +170,6 @@ _C.disconnect = function(_server)
   if zombies == true then
     log.error"Проблемы с очисткой зомби-процессов. Необходима отладка!"
   end
-  sleep(3)
 end
 
 _C.checker = function(server)
