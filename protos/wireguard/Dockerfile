@@ -25,7 +25,7 @@ RUN apk add curl bash \
     echo "trigger-for-re-running-this-step: 1111"
 
 # WARN: don't forget that all paths are relative to the root of the repo
-ADD --link --chmod=600 ./protos/wireguard/wg.conf /etc/wireguard/wg.conf
+ADD --link --chmod=600 ./protos/wireguard/wg.conf.template /etc/wireguard/wg.conf.template
 ADD --link ./checker /usr/share/lua/5.1/checker
 ADD --link ./protos/wireguard/custom.lua /usr/share/lua/5.1/checker/custom.lua
 

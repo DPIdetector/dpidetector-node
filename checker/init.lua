@@ -1,6 +1,7 @@
 -- luacheck: globals
 
 local interval = 600
+local version  = "0.0.1"
 
 local json   = require"cjson"
 local utils  = require"checker.utils"
@@ -10,9 +11,10 @@ local sleep  = utils.sleep
 local getenv = utils.getenv
 local log    = utils.logger
 
-_G.proto    = custom.proto
-_G.token    = getenv"token"
-_G.nodename = getenv"node"
+_G.proto     = custom.proto
+local token  = getenv"token"
+-- local node_id   = getenv"node_id"
+local nodename   = getenv"node"
 
 _G.DEBUG   = os.getenv"DEBUG" or os.getenv(("%s_DEBUG"):format(_G.proto:gsub("-", "_")))
 _G.QUIET = os.getenv"QUIET"
@@ -46,6 +48,12 @@ local api = ("https://%s/api"):format(backend_domain)
 local servers_endpoint = ("%s/servers/"):format(api)
 local reports_endpoint = ("%s/reports/"):format(api)
 
+_G.headers = {
+  ("Token: %s"):format(token),
+  ("Software-Version: %s"):format(version),
+  "Content-Type: application/json",
+}
+
 log.verbose"=== Вход в основной рабочий цикл ==="
 while true do
   log.verbose"=== Итерация главного цикла начата ==="
@@ -59,12 +67,9 @@ while true do
     -- Выполнять проверки только если нода выходит в интернет в России (например, не через VPN)
     -- т.к. в данный момент нас интересует именно блокировка трафика из/внутри России,
     -- а трафик из заграницы для этих целей бесполезен
-    local headers = {
-        ("Token: %s"):format(_G.token),
-      }
     local servers_fetched = req{
       url = servers_endpoint,
-      headers = headers,
+      headers = _G.headers,
     }
 
     if servers_fetched:match"COULDNT_CONNECT" then
@@ -72,12 +77,12 @@ while true do
       --- то на всякий случай попробуем перезапросить ещё раз
       servers_fetched = req{
         url = servers_endpoint,
-        headers = headers,
+        headers = _G.headers,
       }
     end
 
     if servers_fetched
-      and servers_fetched:match"name"
+      and servers_fetched:match"domain"
       and servers_fetched:match"^%["
     then
       local ok, e = pcall(json.decode, servers_fetched)
@@ -104,7 +109,7 @@ while true do
   end
 
   for _, server in ipairs(servers) do
-    log.verbose(("=== Итерация цикла проверки сервера %s начата ==="):format(server.name))
+    log.verbose(("=== Итерация цикла проверки сервера %s начата ==="):format(server.domain))
 
     _G.log_fd = io.open(log_fn, "w+")
 
@@ -112,8 +117,10 @@ while true do
 
     local report = {
       server_name = tostring(server.name),
+      node_name = tostring(nodename),
+      -- node_id = tostring(_G.node_id),
+      -- server_domain = tostring(server.domain),
       protocol = tostring(_G.proto),
-      node_name = tostring(_G.nodename),
     }
 
     if conn then
@@ -137,10 +144,7 @@ while true do
       req{
         url = reports_endpoint,
         post = json.encode(report),
-        headers = {
-          ("Token: %s"):format(_G.token),
-          "Content-Type: application/json",
-        },
+        headers = _G.headers,
       }
     else
       report.available = false
@@ -153,10 +157,7 @@ while true do
       req{
         url = reports_endpoint,
         post = json.encode(report),
-        headers = {
-          ("Token: %s"):format(_G.token),
-          "Content-Type: application/json",
-        },
+        headers = _G.headers,
       }
     end
     _G.log_fd:close()

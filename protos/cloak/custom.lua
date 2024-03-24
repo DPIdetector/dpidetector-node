@@ -11,27 +11,16 @@ local cfg_path = "/etc/ckclient.json"
 
 _C.proto = "cloak"
 
-_C.init = function()
-  local fd = io.open(cfg_path, "r")
-  _C.cfg_tpl = fd:read"*a"
-  fd:close()
-end
+_C.init = function() end
 
 _C.connect = function(server)
-  if not server.domain then
-    log.error(
-      "Запись о сервере %s не содержит информации о домене, который стоит использовать для подключения к нему",
-      tostring(server.name)
-    )
-    return false
-  end
   log.verbose(("=== Подключение (сервер: %s) ==="):format(server.domain))
+
   local meta_r = req{
     url = ("https://%s:%d/%s"):format(server.domain, server.port, _C.proto),
-    headers = {
-      ("Token: %s"):format(_G.token),
-    },
+    headers = _G.headers,
   }
+
   if meta_r:match"^%[" or meta_r:match"^%{" then
     local ok, res = pcall(json.decode, meta_r)
     if ok
@@ -45,10 +34,16 @@ _C.connect = function(server)
     then
       server.meta = res
     else
-      log.error(("Ошибка десереализации (или верификации) мета-информации о сервере: %s"):format(res))
+      log.error(("Ошибка десереализации (или верификации) мета-информации о сервере: %s"):format(meta_r))
       return false
     end
   end
+
+  local fd
+
+  fd = io.open(("%s.template"):format(cfg_path), "r")
+  local cfg_tpl = fd:read"*a"
+  fd:close()
 
   local replaces = {
     ENCRYPTION = server.meta.encryption,
@@ -57,9 +52,9 @@ _C.connect = function(server)
     SERVERNAME = server.meta.servername,
     BROWSER = server.meta.browsersig,
   }
-  local srv_cfg = _C.cfg_tpl:gsub("__([A-Za-z0-9_-.]+)__", replaces)
+  local srv_cfg = cfg_tpl:gsub("__([A-Za-z0-9_-.]+)__", replaces)
 
-  local fd = io.open(cfg_path, "w+")
+  fd = io.open(cfg_path, "w+")
   fd:write(srv_cfg)
   fd:flush()
   fd:close()

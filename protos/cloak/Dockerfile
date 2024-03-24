@@ -24,7 +24,7 @@ RUN apk add curl \
     echo "trigger-for-re-running-this-step: 1111"
 
 # WARN: don't forget that all paths are relative to the root of the repo
-ADD --link ./protos/cloak/ckclient.json /etc/ckclient.json
+ADD --link ./protos/cloak/ckclient.json.template /etc/ckclient.json.template
 ADD --link ./checker /usr/share/lua/5.1/checker
 ADD --link ./protos/cloak/custom.lua /usr/share/lua/5.1/checker/custom.lua
 

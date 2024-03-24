@@ -15,7 +15,7 @@ RUN apk add \
 # openvpn-openrc
 
 # WARN: don't forget that all paths are relative to the root of the repo
-ADD --link ./protos/openvpn-tlscrypt/checker.ovpn /etc/openvpn/checker.conf
+ADD --link ./protos/openvpn-tlscrypt/checker.ovpn.template /etc/openvpn/checker.conf.template
 ADD --link ./checker /usr/share/lua/5.1/checker
 ADD --link ./protos/openvpn-tlscrypt/custom.lua /usr/share/lua/5.1/checker/custom.lua
 
