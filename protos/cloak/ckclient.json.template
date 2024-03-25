@@ -1,0 +1,11 @@
+{
+  "Transport": "direct",
+  "ProxyMethod": "shadowsocks",
+  "EncryptionMethod": "__ENCRYPTION__",
+  "UID": "__UID__",
+  "PublicKey": "__PUBKEY__",
+  "ServerName": "__SERVERNAME__",
+  "NumConn": 4,
+  "BrowserSig": "__BROWSER__",
+  "StreamTimeout": 300
+}

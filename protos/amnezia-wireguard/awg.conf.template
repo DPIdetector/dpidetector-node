@@ -1,0 +1,18 @@
+[Interface]
+PrivateKey = __PRIVKEY__
+Address = __ADDRESS__
+
+Jc = __JC__
+Jmin = __JMIN__
+Jmax = __JMAX__
+S1 = __S1__
+S2 = __S2__
+H1 = __H1__
+H2 = __H2__
+H3 = __H3__
+H4 = __H4__
+
+[Peer]
+PublicKey = __PUBKEY__
+AllowedIPs = __NETWORK__
+Endpoint = __SERVER__:__PORT__
