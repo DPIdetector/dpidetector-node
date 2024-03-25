@@ -162,7 +162,7 @@ while true do
     end
     _G.log_fd:close()
     _G.log_fd = _G.devnull
-    log.verbose(("=== Итерация цикла проверки сервера %s завершена ==="):format(server.name))
+    log.verbose(("=== Итерация цикла проверки сервера %s завершена ==="):format(server.domain))
   end
   log.verbose"=== Итерация главного цикла начата ==="
   log.verbose(("=== Ожидание следующей итерации цикла проверки (%d секунд) ==="):format(interval))
