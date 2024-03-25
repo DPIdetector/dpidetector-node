@@ -13,8 +13,8 @@ local log    = utils.logger
 
 _G.proto     = custom.proto
 local token  = getenv"token"
--- local node_id   = getenv"node_id"
-local nodename   = getenv"node"
+local node_id   = getenv"node_id"
+-- local nodename   = getenv"node"
 
 _G.DEBUG   = os.getenv"DEBUG" or os.getenv(("%s_DEBUG"):format(_G.proto:gsub("-", "_")))
 _G.QUIET = os.getenv"QUIET"
@@ -116,10 +116,10 @@ while true do
     local conn = custom.connect(server)
 
     local report = {
-      server_name = tostring(server.name),
-      node_name = tostring(nodename),
-      -- node_id = tostring(_G.node_id),
-      -- server_domain = tostring(server.domain),
+      -- server_name = tostring(server.name),
+      -- node_name = tostring(nodename),
+      node_id = tostring(node_id),
+      server_domain = tostring(server.domain),
       protocol = tostring(_G.proto),
     }
 
