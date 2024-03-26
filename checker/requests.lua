@@ -56,7 +56,7 @@ return function(settings)
 
   local success, errmsg = pcall(c.perform, c)
   if not success then
-    log.error(("Ошибка при выполнении запроса: %q"):format(errmsg))
+    log.bad(("Ошибка при выполнении запроса: %q"):format(errmsg))
     return errmsg
   end
 
