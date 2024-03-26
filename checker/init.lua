@@ -118,6 +118,7 @@ while true do
       log.debug"=== Запуск функции проверки соединения ==="
       local result = custom.checker and custom.checker(server) or false
       log.debug"=== Запуск функции завершения соединения ==="
+      sleep(1) --- NOTE: небольшая пауза перед отключением после проверки
       custom.disconnect(server)
       local available = not(not(result))
 
@@ -166,6 +167,8 @@ while true do
 
     log.debug(("=== [%d] Итерация цикла проверки доступности серверов завершена ==="):format(idx))
   end
+
+  if _G.need_restart then os.exit(1) end
 
   log.debug"== Итерация главного цикла окончена =="
   log.debug"== Ожидание следующей итерации цикла проверки =="

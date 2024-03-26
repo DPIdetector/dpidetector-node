@@ -132,10 +132,12 @@ _C.disconnect = function(_server)
     }
     if e == 1 then finished = true end
     sleep(1)
-  until finished==true or count>=10
+  until finished==true or count>=20
   log.debug"===== Выход из цикла ожидания завершения подключения ====="
   if finished == false then
-    log.bad"Проблемы с завершением подключения. Необходима отладка!"
+    log.bad"Проблемы с завершением подключения (тунеллирующая програма не завершилась за 20 секунд)!"
+    log.bad"Перезапускаем контейнер"
+    _G.need_restart = true
   end
   local zombies = true
   count = 0
@@ -157,7 +159,9 @@ _C.disconnect = function(_server)
   until zombies==false or count>=20
   log.debug"===== Выход из цикла очистки зомби-процессов ====="
   if zombies == true then
-    log.bad"Проблемы с очисткой зомби-процессов. Необходима отладка!"
+    log.bad"Проблемы с очисткой зомби-процессов (накопилось больше 20 зомби)!"
+    log.bad"Перезапускаем контейнер"
+    _G.need_restart = true
   end
   log.debug"==== Выход из функции завершения подключения ===="
 end
