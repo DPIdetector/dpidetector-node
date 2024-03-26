@@ -20,7 +20,7 @@ return function(settings)
   if settings.proxy then
     c:setopt_proxy(settings.proxy)
   end
-  c:setopt_useragent(settings.useragent or "DPIdetector/0.0.0")
+  c:setopt_useragent(settings.useragent or ("DPIDetector/%s"):format(_G.version))
   if settings.interface then
     c:setopt_interface(settings.interface)
   end

@@ -1,7 +1,7 @@
 -- luacheck: globals
 
 local interval = 600
-local version  = "0.0.1"
+_G.version  = "0.0.1"
 
 local json   = require"cjson"
 local utils  = require"checker.utils"
@@ -14,34 +14,25 @@ local log    = utils.logger
 _G.proto     = custom.proto
 local token  = getenv"token"
 local node_id   = getenv"node_id"
--- local nodename   = getenv"node"
 
-_G.DEBUG   = os.getenv"DEBUG" or os.getenv(("%s_DEBUG"):format(_G.proto:gsub("-", "_")))
-_G.QUIET = os.getenv"QUIET"
+_G.DEBUG = os.getenv"DEBUG" or os.getenv(("%s_DEBUG"):format(_G.proto:gsub("-", "_")))
+_G.VERBOSE = os.getenv"VERBOSE" or os.getenv(("%s_VERBOSE"):format(_G.proto:gsub("-", "_")))
+_G.QUIET = os.getenv"QUIET" and not(_G.VERBOSE or _G.DEBUG)
 
-if _G.DEBUG or not _G.QUIET then
-  _G.stdout = io.stdout
-  _G.stderr = io.stderr
-else
+_G.devnull = io.output("/dev/null")
+if _G.QUIET then
   _G.stdout  = _G.devnull
   _G.stderr  = _G.devnull
+else
+  _G.stdout = io.stdout
+  _G.stderr = io.stderr
+  io.output(io.stdout)
 end
-_G.devnull = io.output("/dev/null")
 
 local log_fn = "/tmp/log"
 _G.log_fd = _G.devnull
 
-log.verbose"=== Запуск приложения ==="
-
-if custom.init then
-  log.verbose"=== Запуск функции инициализации, специфичной для протокола ==="
-  local ok, ret = pcall(custom.init)
-  if not ok then
-    log.debug(("Ошибка при инициализации: %q"):format(ret))
-    os.exit(1)
-  end
-  log.verbose"=== Инициализация завершена успешно ==="
-end
+log.debug"Запуск приложения"
 
 local backend_domain = "dpidetect.org"
 local api = ("https://%s/api"):format(backend_domain)
@@ -50,13 +41,13 @@ local reports_endpoint = ("%s/reports/"):format(api)
 
 _G.headers = {
   ("Token: %s"):format(token),
-  ("Software-Version: %s"):format(version),
+  ("Software-Version: %s"):format(_G.version),
   "Content-Type: application/json",
 }
 
-log.verbose"=== Вход в основной рабочий цикл ==="
+log.debug"= Вход в основной рабочий цикл ="
 while true do
-  log.verbose"=== Итерация главного цикла начата ==="
+  log.debug"== Итерация главного цикла начата =="
   local servers = {}
 
   local geo = req{
@@ -99,8 +90,8 @@ while true do
         servers = e
       end
     else
-      log.error"Не удалось связаться с бекендом"
-      log.error"Если данное сообщение имеет разовый характер - можно игнорировать"
+      log.error"Не удалось получить список серверов"
+      log.error"Если данное сообщение имеет разовый характер - можно проигнорировать"
       log.error"Если появляется при каждой итерации проверки - включите режим отладки и проверьте причину"
       log.debug"====== Результат запроса: ======"
       log.debug(servers_fetched)
@@ -108,63 +99,76 @@ while true do
     end
   end
 
-  for _, server in ipairs(servers) do
-    log.verbose(("=== Итерация цикла проверки сервера %s начата ==="):format(server.domain))
+  for idx, server in ipairs(servers) do
+    log.debug(("=== [%d] Итерация цикла проверки доступности серверов начата ==="):format(idx))
 
     _G.log_fd = io.open(log_fn, "w+")
 
+    log.print"Попытка установления соединения с сервером и проверки работоспособности подключения"
     local conn = custom.connect(server)
 
     local report = {
-      -- server_name = tostring(server.name),
-      -- node_name = tostring(nodename),
       node_id = tostring(node_id),
       server_domain = tostring(server.domain),
       protocol = tostring(_G.proto),
     }
 
     if conn then
-      log.verbose"=== Функция установки соединения завершилась успешно ==="
-      log.verbose"=== Запуск функции проверки доступности ==="
+      log.debug"=== Функция установки соединения завершилась успешно ==="
+      log.debug"=== Запуск функции проверки соединения ==="
       local result = custom.checker and custom.checker(server) or false
-      log.verbose"=== Запуск функции завершения соединения ==="
+      log.debug"=== Запуск функции завершения соединения ==="
       custom.disconnect(server)
       local available = not(not(result))
 
       report.available = available or false
 
-      log.verbose"=== Отправка отчёта ==="
-      log.verbose(("=== (%sблокируется) ==="):format(available and "не " or ""))
-
-      _G.log_fd:flush()
-      _G.log_fd:seek"set"
-
-      report.log = _G.log_fd:read"*a"
-
-      req{
-        url = reports_endpoint,
-        post = json.encode(report),
-        headers = _G.headers,
-      }
+      if available then
+        log.good"Cоединение с сервером не блокируется"
+      else
+        log.bad"Соединение с сервером, возможно, блокируется"
+      end
     else
       report.available = false
-
-      _G.log_fd:flush()
-      _G.log_fd:seek"set"
-
-      report.log = _G.log_fd:read"*a"
-
-      req{
-        url = reports_endpoint,
-        post = json.encode(report),
-        headers = _G.headers,
-      }
+      log.bad"Проблемы при подключении к серверу"
     end
+
+    _G.log_fd:flush()
+    _G.log_fd:seek"set"
+
+    report.log = _G.log_fd:read"*a"
+
+    log.print"Отправка отчёта"
+    local resp_json = req{
+      url = reports_endpoint,
+      post = json.encode(report),
+      headers = _G.headers,
+    }
+    local ok, resp_t = pcall(json.decode, resp_json)
+    if not ok then
+      log.bad(
+        ("Ошибка обработки ответа бекенда! Ожидался JSON-массив, получено: %s")
+          :format(resp_json)
+      )
+      resp_t = {}
+    end
+    if resp_t.status == "success" then
+      log.good(("Отчёт успешно получен сервером и ему присвоен номер %s"):format(resp_t.uid or "<ошибка>"))
+    else
+      log.bad"При отправке отчёта произошли ошибки"
+      log.bad"Возможно, информация ниже вам пригодится:"
+      log.bad(("Ответ сервера: %s"):format(resp_json))
+      log.bad"Если из сообщений об ошибках выше ничего не понятно - напишите в чат"
+    end
+
     _G.log_fd:close()
     _G.log_fd = _G.devnull
-    log.verbose(("=== Итерация цикла проверки сервера %s завершена ==="):format(server.domain))
+
+    log.debug(("=== [%d] Итерация цикла проверки доступности серверов завершена ==="):format(idx))
   end
-  log.verbose"=== Итерация главного цикла начата ==="
-  log.verbose(("=== Ожидание следующей итерации цикла проверки (%d секунд) ==="):format(interval))
+
+  log.debug"== Итерация главного цикла окончена =="
+  log.debug"== Ожидание следующей итерации цикла проверки =="
+
   sleep(interval)
 end

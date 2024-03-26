@@ -157,9 +157,10 @@ local function cmds_to_ansi(str)
     brightcyanbg    = "\27[96m",
     brightwhitebg   = "\27[97m",
   }
-  local function parse_cmds(str)
+
+  local function parse_cmds(s)
     local buffer = {}
-    for word in str:gmatch("[%w:_]+") do
+    for word in s:gmatch("[%w:_]+") do
       local seq
       if word:match":" then
         local C, R, G, B
@@ -178,7 +179,8 @@ local function cmds_to_ansi(str)
     end
     return table.concat(buffer)
   end
-  return (str:gsub("(%%{(.-)})", function(_, str) return parse_cmds(str) end))
+
+  return (str:gsub("(%%{(.-)})", function(_, s) return parse_cmds(s) end))
 end
 
 local function log(t)
@@ -188,25 +190,28 @@ local function log(t)
     info = _G.stdout,
   }
   local signs = {
-    error = "E",
-    warning = "W",
-    info = "I",
-    debug = "D",
-    verbose = "V",
+    bad = "!!",
+    warn = "WW",
+    good = "OK",
+    debug = "DD",
+    verbose = "VV",
+    print = "..",
   }
   local log_to_console = {
-    error = true,
-    warning = true,
-    info = true,
-    verbose = not(_G.QUIET) or not(not(_G.DEBUG)) or false,
-    debug = not(not(_G.DEBUG)) or false,
+    bad = not(_G.QUIET),
+    warn = not(_G.QUIET),
+    good = not(_G.QUIET),
+    verbose = not(not(_G.VERBOSE)),
+    print = not(_G.QUIET),
+    debug = not(not(_G.DEBUG)),
   }
   local colors = o.colors or {
-    error = "%{red fg_rgb:250:20:20 bold}",
-    warning = "%{yellow fg_rgb:250:250:20 bold}",
-    info = "%{green}",
-    verbose = "%{magenta}",
-    debug = "%{cyan}",
+    bad = "%{red fg_rgb:250:20:20 bold}",
+    warn = "%{yellow fg_rgb:250:250:20 bold}",
+    good = "%{green fg_rgb:50:200:50}",
+    verbose = "%{cyan fg_rgb:60:180:230}",
+    print = "%{fg_default fg_rgb:180:180:180}",
+    debug = "%{fg_default fg_rgb:111:111:111}",
     reset = "%{reset}",
     bold = "%{bold}",
   }
@@ -241,29 +246,31 @@ local function log(t)
     handle_newlines(t.text or ""),
     colors.reset or "",
   }
-
   local logrecord = cmds_to_ansi(
     tpl:format(
       table.unpack(fmt)
     )
   )
+
   if o.force_console or log_to_console[t.level] then
     console_fd:write(logrecord)
   end
   logfile_fd:write(logrecord)
+  logfile_fd:flush()
 end
 
 _U.logger = {
-  --- TODO:
-  --- - json-логгирование?
-  error = function(text, opts)
-    log{level = "error", text = text, opts = opts}
+  bad = function(text, opts)
+    log{level = "bad", text = text, opts = opts}
   end,
-  warning = function(text, opts)
-    log{level = "warning", text = text, opts = opts}
+  warn = function(text, opts)
+    log{level = "warn", text = text, opts = opts}
   end,
-  info = function(text, opts)
-    log{level = "info", text = text, opts = opts}
+  good = function(text, opts)
+    log{level = "good", text = text, opts = opts}
+  end,
+  print = function(text, opts)
+    log{level = "print", text = text, opts = opts}
   end,
   verbose = function(text, opts)
     log{level = "verbose", text = text, opts = opts}

@@ -26,6 +26,7 @@ RUN apk add curl bash \
 
 # WARN: don't forget that all paths are relative to the root of the repo
 ADD --link --chmod=600 ./protos/amnezia-wireguard/awg.conf.template /etc/wireguard/awg.conf.template
+ADD --link --chmod=600 ./protos/amnezia-wireguard/awg.conf.template /etc/wireguard/awg.conf
 ADD --link ./checker /usr/share/lua/5.1/checker
 ADD --link ./protos/amnezia-wireguard/custom.lua /usr/share/lua/5.1/checker/custom.lua
 
