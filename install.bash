@@ -16,8 +16,8 @@ function wait_for_conf() {
 if [[ -f "install.bash" && -f "start.bash" && -f "update.bash" && -f "compose.yml" ]]; then
   # NOTE: Похоже, нас вызвали из директории уже скачанного проекта
   shopt -s dotglob
-  url="$([[ -d "${PWD}/.git" ]] && git config --local remote.origin.url)"
   if [[ -d "${PWD}/.git" ]]; then
+    url="$(git config --local remote.origin.url)"
     if [[ "${url}" == "${REPO_URL}" ]]; then
       git reset --hard
     elif [[ "${url}" == "git@"* ]]; then
