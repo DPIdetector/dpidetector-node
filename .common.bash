@@ -129,7 +129,17 @@ function check_tag_on_dockerhub() {
 
 function released_version() {
   checkutil curl || die "Не удалось найти 'curl'"
-  curl -Lsf "https://dpidetector.github.io/dpidetector-node/VERSION" || die "Не удалось получить актуальную версию"
+  if [[ -n "${RELEASED_VERSION}" ]]; then
+    echo "${RELEASED_VERSION}"
+  else
+    local rv=$(curl -Ls "https://dpidetector.github.io/dpidetector-node/VERSION")
+    if [[ -n "${rv}" ]]; then
+      echo "${rv}"
+      export RELEASED_VERSION="${rv}"
+    else
+      die "Не удалось получить актуальную версию"
+    fi
+  fi
 }
 
 function current_branch() {

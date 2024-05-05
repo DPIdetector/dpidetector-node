@@ -22,15 +22,18 @@ function dkrup() {
     if [[ -n "${DPIDETECTOR_FORCE_BUILD}" ]]; then
       nonfatal die "Будет произведена локальная сборка контейнеров" \
         "(однако, пожалуйста, сообщите о случившемся в чат)"
-      ${compose[*]} build --pull --no-cache || die "Сборка провалилась"
+      save_version $(released_version)
+      if ! ${compose[*]} build --pull --no-cache; then
+        save_version 0.0.0
+        die "Сборка провалилась"
+      fi
     else
       die "Пожалуйста, напишите об этом в чат!"
     fi
   fi
   ${compose[*]} up ${up_args[*]} --remove-orphans --detach --force-recreate
+  save_version $(released_version)
 }
-
-save_version $(released_version)
 
 if [[ -f /usr/libexec/docker/cli-plugins/docker-compose ]]; then
   dkrup plugin
