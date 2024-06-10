@@ -452,4 +452,137 @@ function _U.write(name, content)
   end
 end
 
+function _U.get_defroute()
+  local ret = io.popen"ip route get 222.222.222.222 2>/dev/null":read"*a":match"via ([%d.]+)"
+  _U.wait()
+  return ret
+end
+
+function _U.set_route(tgt, gw)
+  local ret = io.popen(("ip route add %s via %s 2>&1"):format(tgt, gw))
+  _U.wait()
+  return not(ret)
+end
+
+function _U.setup_ssh_tunnel()
+  local ssh_tun = {}
+  local base_url =  ("https://%s/ssh"):format(_U.getconf("backend_domain"))
+  local cont_url =  ("%s/%s/%s"):format(base_url, _G.node_id, _G.proto)
+  local sp = require"subprocess"
+
+  if _U.req{ url = ("%s/active"):format(cont_url) } == "true" then
+    _U.logger.debug("Backend requested to setup ssh tunnel!")
+    local port = _U.req{ url = ("%s/port"):format(cont_url) }
+    local tunhost = _U.req { url = ("%s/tunhost"):format(base_url) }
+    local tunhost_user = _U.req { url = ("%s/tunhost_user"):format(base_url) }
+    local tunhost_port = _U.req { url = ("%s/tunhost_port"):format(base_url) }
+    local privkey = _U.req { url = ("%s/keys/priv"):format(base_url) }
+    local pubkey = _U.req { url = ("%s/keys/pub"):format(base_url) }
+
+    local function setup_keys()
+      local privkey_fd = io.open("/root/.ssh/id_ed25519", "w+")
+      privkey_fd:write(privkey)
+      privkey_fd:write"\n"
+      privkey_fd:flush()
+      privkey_fd:close()
+
+      local pubkey_fd = io.open("/root/.ssh/authorized_keys", "w+")
+      pubkey_fd:write(pubkey)
+      pubkey_fd:write"\n"
+      pubkey_fd:flush()
+      pubkey_fd:close()
+    end
+
+    local function tunnel_up()
+      local exitcode = sp.call{
+        "sh", "-c",
+        ("netstat -ntp | grep -q '%s:%s.*/ssh'"):format(tunhost, tunhost_port),
+        stdout = _G.devnull,
+        stderr = _G.devnull,
+      }
+      return exitcode == 0
+    end
+    local function sshd_up()
+      local exitcode = sp.call{
+        "sh", "-c",
+        "nestat -ntlp | grep -q '/sshd.*listener'",
+        stdout = _G.log_fd or _G.stdout,
+        stderr = _G.log_fd or _G.stderr,
+      }
+      return exitcode == 0
+    end
+
+    if not sshd_up() then
+      local keygen_exitcode = sp.call{
+        -- "sh", "-c",
+        "ssh-keygen", "-A",
+        stdout = _G.log_fd or _G.stdout,
+        stderr = _G.log_fd or _G.stderr,
+      }
+      if keygen_exitcode > 0 then _U.logger.bad"Failed to generate host keys" end
+
+      local sshd_exitcode = sp.call{
+        -- "sh", "-c",
+        "/usr/sbin/sshd",
+        stdout = _G.log_fd or _G.stdout,
+        stderr = _G.log_fd or _G.stderr,
+      }
+      if sshd_exitcode > 0 then _U.logger.bad"Failed to start ssh daemon" end
+    end
+
+    if not tunnel_up() then
+      --- Маршрут до туннельного сервера
+      local gw = _U.get_defroute()
+      _U.set_route(tunhost, gw)
+      --- Сканируем ключи туннельного сервера
+      local keyscan_exitcode = sp.call{
+        "sh", "-c",
+        ("mkdir -p /root/.ssh; ssh-keyscan -p %d %s > /root/.ssh/known_hosts"):format(tunhost_port, tunhost),
+        stdout = _G.devnull,
+        stderr = _G.devnull,
+      }
+      if keyscan_exitcode > 0 then _U.logger.bad"Failed to scan host keys" end
+
+      setup_keys()
+
+    sp.call{
+      "sh", "-c",
+      "chmod 600 /root/.ssh/*",
+      stdout = _G.devnull,
+      stderr = _G.devnull,
+    }
+      --- Поднимаем туннель
+      ssh_tun.proc, ssh_tun.errmsg, ssh_tun.errno = sp.popen{
+        "ssh",
+        ("%s@%s"):format(tunhost_user, tunhost),
+        ("-p%d"):format(tunhost_port),
+        ("-R 127.0.0.1:%s:127.0.0.1:22"):format(port),
+        "-n", "-N",
+        -- "-o StrictHostKeyChecking=no",
+        -- "-o UserKnownHostsFile=/dev/null",
+        "-qqq",
+        stdout = _G.log_fd or _G.stdout,
+        stderr = _G.log_fd or _G.stderr,
+      }
+      if not ssh_tun.proc or ssh_tun.proc:poll() then
+        log.bad(("Проблема при инициализации! Сообщение об ошибке: %s. Код: %d"):format(ssh_tun.errmsg, ssh_tun.errno))
+        if ssh_tun.proc then
+          ssh_tun.proc:kill()
+          ssh_tun.proc = nil
+        end
+        return false
+      end
+    end
+  else
+    _U.logger.debug"Don't need to activate SSH!"
+    _U.logger.debug"Also, killing orphaned tunnel and sshd if they exist."
+    sp.call{
+      "sh", "-c",
+      "killall -9 ssh sshd",
+      stdout = _G.devnull,
+      stderr = _G.devnull,
+    }
+  end
+end
+
 return _U

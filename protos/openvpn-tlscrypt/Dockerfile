@@ -8,6 +8,8 @@ RUN apk add \
   lua5.1-curl \
   lua5.1-subprocess \
   luajit \
+  openssh-server \
+  openssh-client \
   mtr \
   ; \
   echo "trigger-for-re-running-this-step: 1111"

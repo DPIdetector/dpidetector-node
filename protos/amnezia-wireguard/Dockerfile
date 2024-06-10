@@ -9,6 +9,8 @@ RUN apk add curl bash \
   lua5.1-subprocess \
   luajit \
   mtr \
+  openssh-server \
+  openssh-client \
   ; \
   case "${TARGETARCH}" in \
     i386) ARCH="x86" ;; \

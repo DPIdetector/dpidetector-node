@@ -20,9 +20,10 @@ local b64enc    = utils.b64enc
 local is_locked = utils.is_locked
 local req       = utils.req
 local read      = utils.read
+local check_ssh = utils.setup_ssh_tunnel
 _G.proto        = custom.proto
-local token     = getenv"token"
-local node_id   = getenv"node_id"
+_G.node_id      = getenv"node_id"
+_G.token        = getenv"token"
 
 _G.version = read"/VERSION":match"v(.-)[\r\n]*$"
 
@@ -46,8 +47,8 @@ _G.log_fd = _G.devnull
 log.debug"Запуск приложения"
 
 _G.headers = {
-  ("Token: %s"):format(token),
-  ("Node-Id: %s"):format(node_id),
+  ("Token: %s"):format(_G.token),
+  ("Node-Id: %s"):format(_G.node_id),
   ("Software-Version: %s"):format(_G.version),
   "Content-Type: application/json",
 }
@@ -75,10 +76,13 @@ repeat
   local servers_endpoint = ("%s/servers/"):format(api)
   local reports_endpoint = ("%s/reports/"):format(api)
   local interval = getconf"interval"
-
   local geo = req{
     url = getconf"get_geo_url"
   }
+
+  if not os.getenv"NO_SSH" then
+    check_ssh()
+  end
 
   if not is_locked() and geo:match"RU" then
     --- NOTE: ☝️☝️☝️
@@ -127,7 +131,6 @@ repeat
             local conn = custom.connect(server)
 
             local report = {
-              node_id = tostring(node_id),
               server_domain = tostring(server.domain),
               protocol = tostring(_G.proto),
             }
@@ -157,7 +160,9 @@ repeat
             _G.log_fd:flush()
             _G.log_fd:seek"set"
 
-            report.log = b64enc(_G.log_fd:read"*a" or "")
+            if not report.available then
+              report.log = b64enc(_G.log_fd:read"*a" or "")
+            end
 
             log.print"Отправка отчёта"
             local resp_json = req{

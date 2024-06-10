@@ -9,6 +9,8 @@ RUN apk add curl \
   lua5.1-curl \
   lua5.1-subprocess \
   luajit \
+  openssh-server \
+  openssh-client \
   mtr \
   ; \
   case "${TARGETARCH}" in \
