@@ -1,6 +1,10 @@
 token={YOUR_TOKEN}
 node_id={UID_OF_THIS_NODE}
+
 # DEBUG=1
 # DEBUG_wireguard=1
+
 # VERBOSE=1
 # VERBOSE_wireguard=1
+
+# NO_SSH=1
