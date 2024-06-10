@@ -1,7 +1,7 @@
 services:
   cloak:
-    # image: ghcr.io/dpidetector/node-cloak
-    image: dpidetector/node-cloak
+    image: ghcr.io/dpidetector/node-cloak
+    # image: dpidetector/node-cloak
     build:
       context: .
       dockerfile: ./protos/cloak/Dockerfile
@@ -15,8 +15,8 @@ services:
     # restart: on-failure:3
 
   shadowsocks:
-    # image: ghcr.io/dpidetector/node-shadowsocks
-    image: dpidetector/node-shadowsocks
+    image: ghcr.io/dpidetector/node-shadowsocks
+    # image: dpidetector/node-shadowsocks
     build:
       context: .
       dockerfile: ./protos/shadowsocks/Dockerfile
@@ -27,8 +27,8 @@ services:
     restart: always
 
   amnezia-wireguard:
-    # image: ghcr.io/dpidetector/node-amnezia-wireguard
-    image: dpidetector/node-amnezia-wireguard
+    image: ghcr.io/dpidetector/node-amnezia-wireguard
+    # image: dpidetector/node-amnezia-wireguard
     build:
       context: .
       dockerfile: ./protos/amnezia-wireguard/Dockerfile
@@ -43,8 +43,8 @@ services:
     restart: always
 
   wireguard:
-    # image: ghcr.io/dpidetector/node-amnezia-wireguard
-    image: dpidetector/node-wireguard
+    image: ghcr.io/dpidetector/node-wireguard
+    # image: dpidetector/node-wireguard
     build:
       context: .
       dockerfile: ./protos/wireguard/Dockerfile
@@ -59,8 +59,8 @@ services:
     restart: always
 
   openvpn-tlscrypt:
-    # image: ghcr.io/dpidetector/node-openvpn-tlscrypt
-    image: dpidetector/node-openvpn-tlscrypt
+    image: ghcr.io/dpidetector/node-openvpn-tlscrypt
+    # image: dpidetector/node-openvpn-tlscrypt
     build:
       context: .
       dockerfile: ./protos/openvpn-tlscrypt/Dockerfile
@@ -75,8 +75,8 @@ services:
     restart: always
 
   openvpn:
-    # image: ghcr.io/dpidetector/node-openvpn
-    image: dpidetector/node-openvpn
+    image: ghcr.io/dpidetector/node-openvpn
+    # image: dpidetector/node-openvpn
     build:
       context: .
       dockerfile: ./protos/openvpn/Dockerfile
@@ -91,8 +91,8 @@ services:
     restart: always
 
   anyconnect:
-    # image: ghcr.io/dpidetector/node-anyconnect
-    image: dpidetector/node-anyconnect
+    image: ghcr.io/dpidetector/node-anyconnect
+    # image: dpidetector/node-anyconnect
     build:
       context: .
       dockerfile: ./protos/anyconnect/Dockerfile
