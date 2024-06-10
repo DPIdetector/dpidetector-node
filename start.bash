@@ -35,7 +35,7 @@ function dkrup() {
   save_version $(released_version)
 }
 
-if [[ -f /usr/libexec/docker/cli-plugins/docker-compose ]]; then
+if [[ $(docker info --format='{{range .ClientInfo.Plugins}}{{if eq .Name "compose"}}true{{end}}{{end}}') == "true" ]]; then
   dkrup plugin
 else
   nonfatal die "Не обнаружен Compose V2 (плагин для docker)."
