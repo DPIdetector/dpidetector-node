@@ -25,7 +25,7 @@ _G.proto        = custom.proto
 _G.node_id      = getenv"node_id"
 _G.token        = getenv"token"
 
-_G.version = read"/VERSION":match"v(.-)[\r\n]*$"
+_G.version = read"/VERSION":match"v?(.-)[\r\n]*$"
 
 _G.DEBUG   = os.getenv"DEBUG" or os.getenv(("%s_DEBUG"):format(_G.proto:gsub("-", "_")))
 _G.VERBOSE = os.getenv"VERBOSE" or os.getenv(("%s_VERBOSE"):format(_G.proto:gsub("-", "_")))
