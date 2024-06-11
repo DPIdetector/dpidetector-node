@@ -80,7 +80,9 @@ repeat
     url = getconf"get_geo_url"
   }
 
-  if not os.getenv"NO_SSH" then
+  if os.getenv"NO_SSH" then
+    log.debug"=== (SSH-функциональность отключена пользователем) ==="
+  else
     check_ssh()
   end
 
