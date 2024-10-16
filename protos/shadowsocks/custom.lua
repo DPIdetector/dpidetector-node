@@ -6,12 +6,12 @@ local check   = utils.check_ip
 local getconf = utils.getconf
 local req     = utils.req
 
-local _C = {}
+local _C      = {}
 
-_C.proto = "shadowsocks"
-_C.type = "transport"
+_C.proto      = "shadowsocks"
+_C.type       = "transport"
 
-_C.connect = function(server)
+_C.connect    = function(server)
   log.debug"==== Вход в функцию подключения ===="
   log.print"Подключение..."
   log.debug(("(сервер: %s)"):format(server.domain))
@@ -28,7 +28,7 @@ _C.connect = function(server)
 
   log.debug"===== Попытка десериализации полученного конфига ====="
   if meta_r:match"^%[" or meta_r:match"^%{" then
-      local ok, res = pcall(json.decode, meta_r)
+    local ok, res = pcall(json.decode, meta_r)
     if ok then
       server.meta = res
     else
@@ -63,7 +63,7 @@ _C.connect = function(server)
   return true
 end
 
-_C.disconnect = function(_server)
+_C.disconnect = function(_)
   log.debug"==== Вход в функцию завершения подключения ===="
   if _C.ss_proc then
     log.print"Завершение подключения"
@@ -76,7 +76,7 @@ _C.disconnect = function(_server)
   log.debug"==== Выход из функции завершения подключения ===="
 end
 
-_C.checker = function(server)
+_C.checker    = function(server)
   log.debug"==== Вход в функцию проверки доступности ===="
   log.print"Проверка доступности начата"
   local res = req{

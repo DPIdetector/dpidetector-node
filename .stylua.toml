@@ -1,0 +1,11 @@
+line_endings = "Unix"
+indent_type = "Spaces"
+indent_width = 2
+column_width = 120
+quote_style = "AutoPreferDouble"
+call_parentheses = "Input"
+# space_before_function_call_single_arg = "None"
+# space_before_attribute = "None"
+
+[sort_requires]
+enabled = false

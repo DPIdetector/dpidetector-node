@@ -1,22 +1,22 @@
-local sp      = require"subprocess"
-local json    = require"cjson"
-local utils   = require"checker.utils"
-local sleep   = utils.sleep
-local log     = utils.logger
-local getconf = utils.getconf
-local check   = utils.check_ip
-local req     = utils.req
-local read    = utils.read
-local write   = utils.write
+local sp       = require"subprocess"
+local json     = require"cjson"
+local utils    = require"checker.utils"
+local sleep    = utils.sleep
+local log      = utils.logger
+local getconf  = utils.getconf
+local check    = utils.check_ip
+local req      = utils.req
+local read     = utils.read
+local write    = utils.write
 
-local _C = {}
+local _C       = {}
 
 local cfg_path = "/etc/ckclient.json"
 
-_C.proto = "cloak"
-_C.type = "transport"
+_C.proto       = "cloak"
+_C.type        = "transport"
 
-_C.connect = function(server)
+_C.connect     = function(server)
   log.debug"==== Вход в функцию подключения ===="
   log.print"Подключение..."
   log.debug(("(сервер: %s)"):format(server.domain))
@@ -35,13 +35,13 @@ _C.connect = function(server)
   if meta_r:match"^%[" or meta_r:match"^%{" then
     local ok, res = pcall(json.decode, meta_r)
     if ok
-    and res.ss_password
-    and res.ss_encryption
-    and res.encryption
-    and res.uid
-    and res.pubkey
-    and res.servername
-    and res.browsersig
+        and res.ss_password
+        and res.ss_encryption
+        and res.encryption
+        and res.uid
+        and res.pubkey
+        and res.servername
+        and res.browsersig
     then
       server.meta = res
     else
@@ -53,8 +53,10 @@ _C.connect = function(server)
 
   log.debug"===== Чтение шаблона конфигурации ====="
   local cfg_tpl = read(("%s.template"):format(cfg_path))
-  --- NOTE: нет обработки ошибки чтения потому что лучше пусть контейнер упадёт (раз криво собран) нежели будет слать
-  ---   кривые репорты
+  if not cfg_tpl then
+    log.bad"Проблемы с шаблоном конфигурации. Дальнейшая работа невозможна!"
+    return false
+  end
   log.debug"===== Завершено ====="
 
   local replaces = {
@@ -116,7 +118,7 @@ _C.connect = function(server)
   return true
 end
 
-_C.disconnect = function(_server)
+_C.disconnect  = function(_)
   log.debug"==== Вход в функцию завершения подключения ===="
   if _C.ss_proc then
     log.print"[ShadowSocks] Завершение подключения"
@@ -137,7 +139,7 @@ _C.disconnect = function(_server)
   log.debug"==== Выход из функции завершения подключения ===="
 end
 
-_C.checker = function(server)
+_C.checker     = function(server)
   log.debug"==== Вход в функцию проверки доступности ===="
   log.print"Проверка доступности начата"
   local res = req{

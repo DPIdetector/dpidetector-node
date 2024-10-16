@@ -1,22 +1,22 @@
-local sp      = require"subprocess"
-local json    = require"cjson"
-local utils   = require"checker.utils"
-local sleep   = utils.sleep
-local log     = utils.logger
-local check   = utils.check_ip
-local req     = utils.req
-local read    = utils.read
-local write   = utils.write
+local sp          = require"subprocess"
+local json        = require"cjson"
+local utils       = require"checker.utils"
+local sleep       = utils.sleep
+local log         = utils.logger
+local check       = utils.check_ip
+local req         = utils.req
+local read        = utils.read
+local write       = utils.write
 
-local _C = {}
+local _C          = {}
 
-local cfg_path = "/etc/wireguard/wg.conf"
+local cfg_path    = "/etc/wireguard/wg.conf"
 
-_C.proto = "wireguard"
+_C.proto          = "wireguard"
 _C.interface_name = "wg"
-_C.type = "transport"
+_C.type           = "transport"
 
-_C.connect = function(server)
+_C.connect        = function(server)
   log.debug"==== Вход в функцию подключения ===="
   log.print"Подключение..."
   log.debug(("(сервер: %s)"):format(server.domain))
@@ -35,14 +35,14 @@ _C.connect = function(server)
   if meta_r:match"^%[" or meta_r:match"^%{" then
     local ok, res = pcall(json.decode, meta_r)
     if ok
-      and res.port
-      and res.server_ip
-      and res.int_net
-      and res.int_address
-      and res.pubkey
-      and res.privkey
-      and res.test_host
-      and res.test_port
+        and res.port
+        and res.server_ip
+        and res.int_net
+        and res.int_address
+        and res.pubkey
+        and res.privkey
+        and res.test_host
+        and res.test_port
     then
       server.meta = res
     else
@@ -54,8 +54,10 @@ _C.connect = function(server)
 
   log.debug"===== Чтение шаблона конфигурации ====="
   local cfg_tpl = read(("%s.template"):format(cfg_path))
-  --- NOTE: нет обработки ошибки чтения потому что лучше пусть контейнер упадёт (раз криво собран) нежели будет слать
-  ---   кривые репорты
+  if not cfg_tpl then
+    log.bad"Проблемы с шаблоном конфигурации. Дальнейшая работа невозможна!"
+    return false
+  end
   log.debug"===== Завершено ====="
 
   local replaces = {
@@ -98,7 +100,7 @@ _C.connect = function(server)
     }
     if e == 0 then finished = true end
     sleep(1)
-  until finished==true or count>=20
+  until finished == true or count >= 20
   log.debug"===== Выход из цикла ожидания подключения ====="
   if finished == false then
     log.bad"Проблемы с настройкой подключения. Необходима отладка!"
@@ -109,7 +111,7 @@ _C.connect = function(server)
   return true
 end
 
-_C.disconnect = function(_server)
+_C.disconnect     = function(_)
   log.debug"==== Вход в функцию завершения подключения ===="
   local exitcode = sp.call{
     "wg-quick",
@@ -134,7 +136,7 @@ _C.disconnect = function(_server)
     }
     if e == 1 then finished = true end
     sleep(1)
-  until finished==true or count>=20
+  until finished == true or count >= 20
   log.debug"===== Выход из цикла ожидания завершения подключения ====="
   if finished == false then
     log.bad"Проблемы с завершением подключения (тунеллирующая програма не завершилась за 20 секунд)!"
@@ -144,7 +146,7 @@ _C.disconnect = function(_server)
   log.debug"==== Выход из функции завершения подключения ===="
 end
 
-_C.checker = function(server)
+_C.checker        = function(server)
   log.debug"==== Вход в функцию проверки доступности ===="
   log.print"Проверка доступности начата"
   local res = req{
@@ -160,4 +162,3 @@ _C.checker = function(server)
 end
 
 return _C
-

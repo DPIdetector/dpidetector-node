@@ -42,9 +42,9 @@ return function(settings)
     log.debug(("====== URL запроса: %s ======"):format(settings.url))
     if #hdr > 0 then
       log.debug"====== Заголовки запроса: ======"
-        for _, v in ipairs(hdr) do
-          log.debug(("%s"):format(v))
-        end
+      for _, v in ipairs(hdr) do
+        log.debug(("%s"):format(v))
+      end
       log.debug"======================"
     end
     if settings.post then
@@ -69,7 +69,7 @@ return function(settings)
   for _, v in ipairs(
     split(
       table.concat(hbuf or {})
-        :gsub("[\r\n]*$", ""),
+      :gsub("[\r\n]*$", ""),
       "\n"
     )
   ) do

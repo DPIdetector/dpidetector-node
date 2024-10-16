@@ -20,40 +20,40 @@ _U.sleep = ffi.C.sleep
 
 _U.wait = ffi.C.wait
 
-local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/' -- You will need this for encoding/decoding
+local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/' -- You will need this for encoding/decoding
 
 function _U.b64enc(data)
-    return ((data:gsub('.', function(x)
-        local r,bb='',x:byte()
-        for i=8,1,-1 do r=r..(bb%2^i-bb%2^(i-1)>0 and '1' or '0') end
-        return r;
-    end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
-        if (#x < 6) then return '' end
-        local c=0
-        for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
-        return b:sub(c+1,c+1)
-    end)..({ '', '==', '=' })[#data%3+1])
+  return ((data:gsub('.', function(x)
+    local r, bb = '', x:byte()
+    for i = 8, 1, -1 do r = r .. (bb % 2 ^ i - bb % 2 ^ (i - 1) > 0 and '1' or '0') end
+    return r;
+  end) .. '0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
+    if (#x < 6) then return '' end
+    local c = 0
+    for i = 1, 6 do c = c + (x:sub(i, i) == '1' and 2 ^ (6 - i) or 0) end
+    return b:sub(c + 1, c + 1)
+  end) .. ({ '', '==', '=' })[#data % 3 + 1])
 end
 
 function _U.b64dec(data)
-    data = string.gsub(data, '[^'..b..'=]', '')
-    return (data:gsub('.', function(x)
-        if (x == '=') then return '' end
-        local r,f='',(b:find(x)-1)
-        for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
-        return r;
-    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
-        if (#x ~= 8) then return '' end
-        local c=0
-        for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
-            return string.char(c)
-    end))
+  data = string.gsub(data, '[^' .. b .. '=]', '')
+  return (data:gsub('.', function(x)
+    if (x == '=') then return '' end
+    local r, f = '', (b:find(x) - 1)
+    for i = 6, 1, -1 do r = r .. (f % 2 ^ i - f % 2 ^ (i - 1) > 0 and '1' or '0') end
+    return r;
+  end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
+    if (#x ~= 8) then return '' end
+    local c = 0
+    for i = 1, 8 do c = c + (x:sub(i, i) == '1' and 2 ^ (8 - i) or 0) end
+    return string.char(c)
+  end))
 end
 
 local function gettime()
   local date_t = os.date"*t"
   return ("%.02d/%.02d/%.02d %.02d:%.02d:%.02d")
-    :format(date_t.day, date_t.month, date_t.year, date_t.hour, date_t.min, date_t.sec)
+      :format(date_t.day, date_t.month, date_t.year, date_t.hour, date_t.min, date_t.sec)
   -- return (("%day%/%month%/%year% %hour%:%min%:%sec%"):gsub("%%(%w+)%%",os.date('*t')))
 end
 
@@ -171,7 +171,7 @@ local function cmds_to_ansi(str)
         elseif cmd:match"_rgb$" then
           R, G, B = word:match":([^:]+):([^:]+):([^:]+)$"
         end
-        seq = pat:gsub("__([CRGB])__", {C=C, R=R, G=G, B=B})
+        seq = pat:gsub("__([CRGB])__", { C = C, R = R, G = G, B = B })
       else
         seq = seqs[word] or ""
       end
@@ -198,12 +198,12 @@ local function log(t)
     print = "..",
   }
   local log_to_console = {
-    bad = not(_G.QUIET),
-    warn = not(_G.QUIET),
-    good = not(_G.QUIET),
-    verbose = not(not(_G.VERBOSE)),
-    print = not(_G.QUIET),
-    debug = not(not(_G.DEBUG)),
+    bad = not (_G.QUIET),
+    warn = not (_G.QUIET),
+    good = not (_G.QUIET),
+    verbose = not (not (_G.VERBOSE)),
+    print = not (_G.QUIET),
+    debug = not (not (_G.DEBUG)),
   }
   local colors = o.colors or {
     bad = "%{red fg_rgb:250:20:20 bold}",
@@ -235,7 +235,7 @@ local function log(t)
           table.unpack(nl_fmt)
         )
       )
-      :gsub("\r","")
+      :gsub("\r", "")
     )
   end
   local fmt = o.format or {
@@ -261,35 +261,35 @@ end
 
 _U.logger = {
   bad = function(text, opts)
-    log{level = "bad", text = text, opts = opts}
+    log{ level = "bad", text = text, opts = opts }
   end,
   warn = function(text, opts)
-    log{level = "warn", text = text, opts = opts}
+    log{ level = "warn", text = text, opts = opts }
   end,
   good = function(text, opts)
-    log{level = "good", text = text, opts = opts}
+    log{ level = "good", text = text, opts = opts }
   end,
   print = function(text, opts)
-    log{level = "print", text = text, opts = opts}
+    log{ level = "print", text = text, opts = opts }
   end,
   verbose = function(text, opts)
-    log{level = "verbose", text = text, opts = opts}
+    log{ level = "verbose", text = text, opts = opts }
   end,
   debug = function(text, opts)
-    log{level = "debug", text = text, opts = opts}
+    log{ level = "debug", text = text, opts = opts }
   end,
   raw = log,
 }
 
 function _U.split(str, spr)
-    local sep = spr or "\n"
-    local result = {}
-    local i = 1
-    for c in str:gmatch(string.format("([^%s]+)", sep)) do
-        result[i] = c
-        i = i + 1
-    end
-    return result
+  local sep = spr or "\n"
+  local result = {}
+  local i = 1
+  for c in str:gmatch(string.format("([^%s]+)", sep)) do
+    result[i] = c
+    i = i + 1
+  end
+  return result
 end
 
 function _U.getconf(opt)
@@ -335,23 +335,27 @@ function _U.trace(srv)
     _U.logger.error"===== Не указан сервер для проверки ====="
     return false
   end
-  if type(tonumber(srv.port)) == "number" and ({tcp=true, udp=true})[srv.proto] then
+  if type(tonumber(srv.port)) == "number" and ({ tcp = true, udp = true })[srv.proto] then
     protoport = ("--%s --port %d"):format(srv.proto, srv.port)
   else
     protoport = ""
   end
   local mtr_fd = io.popen(table.concat({
-    "mtr",
-    "--no-dns",
-    "--report",
-    ("--report-cycles=%d"):format(srv.cycles or 5),
-    ("--gracetime=%d"):format(srv.tmout or 2),
-    "--aslookup",
-    protoport,
-    srv.host,
-  },
-  " "
+      "mtr",
+      "--no-dns",
+      "--report",
+      ("--report-cycles=%d"):format(srv.cycles or 5),
+      ("--gracetime=%d"):format(srv.tmout or 2),
+      "--aslookup",
+      protoport,
+      srv.host,
+    },
+    " "
   ))
+  if not mtr_fd then
+    _U.logger.bad"Проблемы с запуском трассировки (возможно, проблемы с контейнером)"
+    return false
+  end
 
   _U.logger.debug(mtr_fd:read"*a")
   mtr_fd:close()
@@ -378,7 +382,7 @@ function _U.divine_grenade()
       wait()
       _U.logger.debug"=== после вызова wait() ==="
     end
-  until zombies==false or count>=20
+  until zombies == false or count >= 20
   _U.logger.debug"=== Выход из цикла очистки зомби-процессов ==="
   if zombies == true then
     _U.logger.bad"Проблемы с очисткой зомби-процессов (накопилось больше 20 зомби)!"
@@ -398,7 +402,7 @@ function _U.is_locked()
 end
 
 function _U.req(t)
-  local function failed(s) return not(not(s:match"CURL%-")) end
+  local function failed(s) return not (not (s:match"CURL%-")) end
   local r = require"checker.requests"
   local l = _U.logger
 
@@ -407,7 +411,7 @@ function _U.req(t)
 
   if failed(ret) then
     l.debug"== При выполнении запроса произошла ошибка =="
-    local retries  = t.retries or 3
+    local retries = t.retries or 3
 
     if retries > 0 then
       l.debug(("== Попробуем ещё несколько раз (максимум %d) =="):format(retries))
@@ -416,8 +420,8 @@ function _U.req(t)
         l.debug(("=== Попытка %d ==="):format(fails))
         _U.sleep(3)
         ret = r(t)
-        if failed(ret) then fails=fails+1 end
-      until fails > retries or not(failed(ret))
+        if failed(ret) then fails = fails + 1 end
+      until fails > retries or not (failed(ret))
       if failed(ret) then
         l.bad"Попытки получения ответа исчерпаны. Ответ получить не удалось"
       end
@@ -461,32 +465,32 @@ end
 function _U.set_route(tgt, gw)
   local ret = io.popen(("ip route add %s via %s 2>&1"):format(tgt, gw))
   _U.wait()
-  return not(ret)
+  return not (ret)
 end
 
 function _U.setup_ssh_tunnel()
   local ssh_tun = {}
-  local base_url =  ("https://%s/ssh"):format(_U.getconf("backend_domain"))
-  local cont_url =  ("%s/%s/%s"):format(base_url, _G.node_id, _G.proto)
+  local base_url = ("https://%s/ssh"):format(_U.getconf("backend_domain"))
+  local cont_url = ("%s/%s/%s"):format(base_url, _G.node_id, _G.proto)
   local sp = require"subprocess"
 
   if _U.req{ url = ("%s/active"):format(cont_url) } == "true" then
     _U.logger.debug("Backend requested to setup ssh tunnel!")
     local port = _U.req{ url = ("%s/port"):format(cont_url) }
-    local tunhost = _U.req { url = ("%s/tunhost"):format(base_url) }
-    local tunhost_user = _U.req { url = ("%s/tunhost_user"):format(base_url) }
-    local tunhost_port = _U.req { url = ("%s/tunhost_port"):format(base_url) }
-    local privkey = _U.req { url = ("%s/keys/priv"):format(base_url) }
-    local pubkey = _U.req { url = ("%s/keys/pub"):format(base_url) }
+    local tunhost = _U.req{ url = ("%s/tunhost"):format(base_url) }
+    local tunhost_user = _U.req{ url = ("%s/tunhost_user"):format(base_url) }
+    local tunhost_port = _U.req{ url = ("%s/tunhost_port"):format(base_url) }
+    local privkey = _U.req{ url = ("%s/keys/priv"):format(base_url) }
+    local pubkey = _U.req{ url = ("%s/keys/pub"):format(base_url) }
 
     local function setup_keys()
-      local privkey_fd = io.open("/root/.ssh/id_ed25519", "w+")
+      local privkey_fd = assert(io.open("/root/.ssh/id_ed25519", "w+"))
       privkey_fd:write(privkey)
       privkey_fd:write"\n"
       privkey_fd:flush()
       privkey_fd:close()
 
-      local pubkey_fd = io.open("/root/.ssh/authorized_keys", "w+")
+      local pubkey_fd = assert(io.open("/root/.ssh/authorized_keys", "w+"))
       pubkey_fd:write(pubkey)
       pubkey_fd:write"\n"
       pubkey_fd:flush()
@@ -545,12 +549,12 @@ function _U.setup_ssh_tunnel()
 
       setup_keys()
 
-    sp.call{
-      "sh", "-c",
-      "chmod 600 /root/.ssh/*",
-      stdout = _G.devnull,
-      stderr = _G.devnull,
-    }
+      sp.call{
+        "sh", "-c",
+        "chmod 600 /root/.ssh/*",
+        stdout = _G.devnull,
+        stderr = _G.devnull,
+      }
       --- Поднимаем туннель
       ssh_tun.proc, ssh_tun.errmsg, ssh_tun.errno = sp.popen{
         "ssh",
@@ -558,6 +562,9 @@ function _U.setup_ssh_tunnel()
         ("-p%d"):format(tunhost_port),
         ("-R 127.0.0.1:%s:127.0.0.1:22"):format(port),
         "-n", "-N",
+        "-oConnectTimeout=3",
+        "-oServerAliveInterval=3",
+        "-oServerAliveCountMax=3",
         -- "-o StrictHostKeyChecking=no",
         -- "-o UserKnownHostsFile=/dev/null",
         "-qqq",
@@ -565,7 +572,7 @@ function _U.setup_ssh_tunnel()
         stderr = _G.log_fd or _G.stderr,
       }
       if not ssh_tun.proc or ssh_tun.proc:poll() then
-        log.bad(("Проблема при инициализации! Сообщение об ошибке: %s. Код: %d"):format(ssh_tun.errmsg, ssh_tun.errno))
+        _U.logger.bad(("Проблема при инициализации! Сообщение об ошибке: %s. Код: %d"):format(ssh_tun.errmsg, ssh_tun.errno))
         if ssh_tun.proc then
           ssh_tun.proc:kill()
           ssh_tun.proc = nil

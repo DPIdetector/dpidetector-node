@@ -1,47 +1,49 @@
 -- luacheck: globals
 
 _G.config_default = {
-  interval        = 300,
-  backend_domain  = "dpidetect.org",
-  get_geo_url     = "https://geo.dpidetect.org/get-iso/plain",
-  get_ip_url      = "https://geo.dpidetect.org/get-ip/plain",
+  interval       = 300,
+  backend_domain = "dpidetect.org",
+  get_geo_url    = "https://geo.dpidetect.org/get-iso/plain",
+  get_ip_url     = "https://geo.dpidetect.org/get-ip/plain",
 }
 
-local json      = require"cjson"
-local custom    = require"checker.custom"
-local utils     = require"checker.utils"
-local sleep     = utils.sleep
-local getenv    = utils.getenv
-local getconf   = utils.getconf
-local log       = utils.logger
-local trace     = utils.trace
-local ripz      = utils.divine_grenade
-local b64enc    = utils.b64enc
-local is_locked = utils.is_locked
-local req       = utils.req
-local read      = utils.read
-local check_ssh = utils.setup_ssh_tunnel
-_G.proto        = custom.proto
-_G.node_id      = getenv"node_id"
-_G.token        = getenv"token"
+local json        = require"cjson"
+local custom      = require"checker.custom"
+local utils       = require"checker.utils"
+local sleep       = utils.sleep
+local getenv      = utils.getenv
+local getconf     = utils.getconf
+local log         = utils.logger
+local trace       = utils.trace
+local ripz        = utils.divine_grenade
+local b64enc      = utils.b64enc
+local is_locked   = utils.is_locked
+local req         = utils.req
+local read        = utils.read
+local check_ssh   = utils.setup_ssh_tunnel
+_G.proto          = custom.proto
+_G.node_id        = getenv"node_id"
+_G.token          = getenv"token"
 
-_G.version = read"/VERSION":match"v?(.-)[\r\n]*$"
+_G.version        = (read"/VERSION" or "broken"):match"v?(.-)[\r\n]*$"
 
-_G.DEBUG   = os.getenv"DEBUG" or os.getenv(("%s_DEBUG"):format(_G.proto:gsub("-", "_")))
-_G.VERBOSE = os.getenv"VERBOSE" or os.getenv(("%s_VERBOSE"):format(_G.proto:gsub("-", "_")))
-_G.QUIET   = os.getenv"QUIET" and not(_G.VERBOSE or _G.DEBUG)
+_G.DEBUG          = os.getenv"DEBUG" or os.getenv(("%s_DEBUG"):format(_G.proto:gsub("-", "_")))
+_G.VERBOSE        = os.getenv"VERBOSE" or os.getenv(("%s_VERBOSE"):format(_G.proto:gsub("-", "_")))
+_G.QUIET          = os.getenv"QUIET" and not (_G.VERBOSE or _G.DEBUG)
 
-_G.devnull = io.output("/dev/null")
+--- @type file*
+_G.devnull        = assert(io.output("/dev/null"))
 if _G.QUIET then
-  _G.stdout  = _G.devnull
-  _G.stderr  = _G.devnull
+  _G.stdout = _G.devnull
+  _G.stderr = _G.devnull
 else
-  _G.stdout  = io.stdout
-  _G.stderr  = io.stderr
+  _G.stdout = assert(io.stdout)
+  _G.stderr = assert(io.stderr)
   io.output(io.stdout)
 end
 
 local log_fn = "/tmp/log"
+--- @type file*
 _G.log_fd = _G.devnull
 
 log.debug"Запуск приложения"
@@ -59,7 +61,7 @@ math.randomseed(
       (("dpidetector/%s"):format(_G.proto)):byte(1, -1)
     } + os.clock(),
     os.time() + os.clock()
-  ) ^ ( -1 / os.clock() )
+  ) ^ (-1 / os.clock())
 )
 
 log.debug"= Вход в основной рабочий цикл ="
@@ -69,7 +71,7 @@ repeat
   log.debug"== Итерация главного цикла начата =="
 
   _G.current_config_json = req{
-    url = "https://dpidetector.github.io/dpidetector-node/config.json"
+    url = "https://dpidetector.github.io/dpidetector-node/config.json" --- NOTE: 🤔
   }
 
   local api = ("https://%s/api"):format(getconf"backend_domain")
@@ -87,7 +89,7 @@ repeat
   end
 
   if not is_locked() and geo:match"RU" then
-    --- NOTE: ☝️☝️☝️
+    --- NOTE: 👆
     --- Выполнять проверки только если нода выходит в интернет в России (например, не через VPN)
     --- т.к. в данный момент мы анализируем блокировку трафика на сетях именно российских провайдеров,
     --- а трафик через заграничных для этих целей бесполезен
@@ -102,8 +104,8 @@ repeat
       }
 
       if servers_fetched
-        and servers_fetched:match"domain"
-        and servers_fetched:match"^%["
+          and servers_fetched:match"domain"
+          and servers_fetched:match"^%["
       then
         local ok, e = pcall(json.decode, servers_fetched)
         if not ok then
@@ -120,7 +122,7 @@ repeat
           for idx, server in ipairs(servers) do
             log.debug(("=== [%d] Итерация цикла проверки доступности серверов начата ==="):format(idx))
 
-            _G.log_fd = io.open(log_fn, "w+")
+            _G.log_fd = assert(io.open(log_fn, "w+"))
 
             trace(server.domain and {
               host = server.domain,
@@ -145,7 +147,7 @@ repeat
               log.debug"=== Запуск функции завершения соединения ==="
               sleep(3) --- NOTE: небольшая пауза перед отключением после проверки
               custom.disconnect(server)
-              local available = not(not(result))
+              local available = not (not (result))
 
               report.available = available or false
 
@@ -180,7 +182,7 @@ repeat
             if not rok then
               log.bad(
                 ("Ошибка обработки ответа бекенда! Ожидался JSON-массив, получено: %s")
-                  :format(resp_json)
+                :format(resp_json)
               )
               resp_t = {}
             end
@@ -225,6 +227,6 @@ repeat
   log.debug"== Ожидание следующей итерации цикла проверки =="
   sleep(interval)
   cycle = cycle + 1
-until cycle>=86400/interval+math.random(3, 7)
+until cycle >= 86400 / interval + math.random(3, 7)
 --- NOTE:    ☝️☝️ раз в сутки (+ рандомизация чтобы перезапускались не все контейнеры одновременно)
 log.print("= Плановый перезапуск раз в сутки для очистки контейнера от потенциальных утечек =")
