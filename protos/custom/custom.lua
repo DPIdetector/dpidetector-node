@@ -29,35 +29,28 @@ _C.prepare    = function()
   if meta_r:match"^%[" or meta_r:match"^%{" then
     local ok, res = pcall(json.decode, meta_r)
     if ok then
-      if #res > 0 then
+      if type(res) == "table" and #res > 0 then
         _C.queue = {}
-
-        _C.queue.trace = {}
-        _C.queue.curl = {}
-        _C.queue.proxy = {}
-
         for i = 1, #res do
           local r = res[i]
           local cmd = r.command
-          if cmd == "trace" then
-            table.insert(_C.queue.trace, {
-              tgt = r.target,
-              port = 443,
-              proto = "tcp",
-              task_id = res[i].task_id,
-            })
-          elseif cmd == "curl" then
-            table.insert(_C.queue.curl, {
-              tgt = r.target,
-              post = nil,
-              task_id = res[i].task_id,
-            })
-          elseif cmd == "proxy" then
-            table.insert(_C.queue.proxy, {
-              tgt = r.target,
-              post = nil,
-              task_id = res[i].task_id,
-            })
+          local opts = {
+            task_id = r.task_id,
+            tgt = r.target,
+          }
+          local cmds = {
+            trace = { port = r.port or 443, proto = r.proto or "tcp", },
+            curl  = { post = r.post, },
+            proxy = { post = r.post, url = r.url, },
+          }
+          local c = cmds[cmd]
+
+          if c then
+            _C.queue[cmd] = _C.queue[cmd] or {}
+            for k, v in pairs(c) do
+              opts[k] = v
+            end
+            table.insert(_C.queue[cmd], opts)
           else
             log.bad(("Получен неподдерживаемый тип задания: %s (id задания: %s)!"):format(cmd, r.task_id))
             return false
@@ -65,7 +58,7 @@ _C.prepare    = function()
         end
       end
     else
-      log.bad(("Ошибка десереализации мета-информации о задании: %s"):format(meta_r))
+      log.bad(("Ошибка десериализации мета-информации о задании: %s"):format(meta_r))
       return false
     end
   end
@@ -75,16 +68,16 @@ _C.prepare    = function()
 end
 
 _C.perform    = function()
-  local back  = ("https://%s"):format(getconf"backend_domain")
+  local back = ("https://%s"):format(getconf"backend_domain")
 
   local jobs = {
-    curl  = function(o) return req{ url = o.tgt, post = o.post } end,
     trace = function(o) return trace{ host = o.tgt, proto = o.proto or "tcp", port = o.proto or 443, } end,
-    proxy = function(o) return req{ url = o.url or back, post = o.post, proxy = o.tgt } end,
+    curl  = function(o) return req{ url = o.tgt, post = o.post, timeout = 5, connect_timeout = 5, retries = 0, } end,
+    proxy = function(o) return req{ url = o.url or back, post = o.post, proxy = o.tgt, timeout = 5, connect_timeout = 5, retries = 0, } end,
   }
   _C.logs    = {}
   for job_type, _ in pairs(jobs) do
-    local current_queue = _C.queue[job_type]
+    local current_queue = _C.queue[job_type] or {}
     for i = 1, #current_queue do
       _C.logs[current_queue[i].task_id] = b64enc(jobs[job_type](current_queue[i]) or "")
     end

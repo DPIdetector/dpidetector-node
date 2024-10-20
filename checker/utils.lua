@@ -350,6 +350,7 @@ function _U.trace(srv)
       "--aslookup",
       protoport,
       srv.host,
+      "2>&1", --- NOTE: без редиректа ошибки не попадают в лог
     },
     " "
   ))
@@ -477,14 +478,18 @@ function _U.setup_ssh_tunnel()
   local cont_url = ("%s/%s/%s"):format(base_url, _G.node_id, _G.proto)
   local sp = require"subprocess"
 
-  if _U.req{ url = ("%s/active"):format(cont_url) } == "true" then
-    _U.logger.debug("Backend requested to setup ssh tunnel!")
-    local port = _U.req{ url = ("%s/port"):format(cont_url) }
-    local tunhost = _U.req{ url = ("%s/tunhost"):format(base_url) }
-    local tunhost_user = _U.req{ url = ("%s/tunhost_user"):format(base_url) }
-    local tunhost_port = _U.req{ url = ("%s/tunhost_port"):format(base_url) }
-    local privkey = _U.req{ url = ("%s/keys/priv"):format(base_url) }
-    local pubkey = _U.req{ url = ("%s/keys/pub"):format(base_url) }
+  local function req(o)
+    return _U.req{ headers = _G.headers, url = o.url }
+  end
+
+  if req{ url = ("%s/active"):format(cont_url) } == "true" then
+    _U.logger.debug("Бекенд попросил поднять SSH-туннель")
+    local port = req{ url = ("%s/port"):format(cont_url) }
+    local tunhost = req{ url = ("%s/tunhost"):format(base_url) }
+    local tunhost_user = req{ url = ("%s/tunhost_user"):format(base_url) }
+    local tunhost_port = req{ url = ("%s/tunhost_port"):format(base_url) }
+    local privkey = req{ url = ("%s/keys/priv"):format(base_url) }
+    local pubkey = req{ url = ("%s/keys/pub"):format(base_url) }
 
     local function setup_keys()
       local privkey_fd = assert(io.open("/root/.ssh/id_ed25519", "w+"))
@@ -526,7 +531,7 @@ function _U.setup_ssh_tunnel()
         stdout = _G.log_fd or _G.stdout,
         stderr = _G.log_fd or _G.stderr,
       }
-      if keygen_exitcode > 0 then _U.logger.bad"Failed to generate host keys" end
+      if keygen_exitcode > 0 then _U.logger.bad"Не получилось сгенерировать хостовые криптоключи" end
 
       local sshd_exitcode = sp.call{
         -- "sh", "-c",
@@ -534,7 +539,7 @@ function _U.setup_ssh_tunnel()
         stdout = _G.log_fd or _G.stdout,
         stderr = _G.log_fd or _G.stderr,
       }
-      if sshd_exitcode > 0 then _U.logger.bad"Failed to start ssh daemon" end
+      if sshd_exitcode > 0 then _U.logger.bad"Не получилось запустить демон SSH" end
     end
 
     if not tunnel_up() then
@@ -548,7 +553,7 @@ function _U.setup_ssh_tunnel()
         stdout = _G.devnull,
         stderr = _G.devnull,
       }
-      if keyscan_exitcode > 0 then _U.logger.bad"Failed to scan host keys" end
+      if keyscan_exitcode > 0 then _U.logger.bad"Не получилось просканировать SSH-ключи" end
 
       setup_keys()
 
@@ -590,8 +595,8 @@ function _U.setup_ssh_tunnel()
       end
     end
   else
-    _U.logger.debug"Don't need to activate SSH!"
-    _U.logger.debug"Also, killing orphaned tunnel and sshd if they exist."
+    _U.logger.debug"Нет нужды в активном SSH-туннеле"
+    _U.logger.debug"Так же, убиваем неиспользуемые SSH-туннели, если таковые были"
     sp.call{
       "sh", "-c",
       "killall -9 ssh sshd",

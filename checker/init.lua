@@ -71,16 +71,11 @@ repeat
   log.debug"== Итерация главного цикла начата =="
 
   _G.current_config_json = req{
-    url = "https://dpidetector.github.io/dpidetector-node/config.json" --- NOTE: 🤔
+    url = "https://dpidetector.github.io/dpidetector-node/config.json", --- NOTE: 🤔
   }
 
-  local api = ("https://%s/api"):format(getconf"backend_domain")
-  local servers_endpoint = ("%s/servers/"):format(api)
-  local reports_endpoint = ("%s/reports/"):format(api)
   local interval = getconf"interval"
-  local geo = req{
-    url = getconf"get_geo_url"
-  }
+  local geo = req{ url = getconf"get_geo_url", }
 
   if os.getenv"NO_SSH" then
     log.debug"=== (SSH-функциональность отключена пользователем) ==="
@@ -94,7 +89,10 @@ repeat
     --- т.к. в данный момент мы анализируем блокировку трафика на сетях именно российских провайдеров,
     --- а трафик через заграничных для этих целей бесполезен
 
-    if custom.type == "transport" then --- NOTE: vpn/прокси/и т.п.
+    if custom.type == "transport" then
+      local api = ("https://%s/api"):format(getconf"backend_domain")
+      local servers_endpoint = ("%s/servers/"):format(api)
+      local reports_endpoint = ("%s/reports/"):format(api)
       local servers_fetched = req{
         url = servers_endpoint,
         headers = _G.headers,
@@ -213,9 +211,7 @@ repeat
         log.debug(servers_fetched)
         log.debug"=================="
       end
-    elseif custom.type == "service" then --- NOTE: мессенджеры, соцсети, ...
-      log.debug(("=== Итерация цикла с заданиями начата ==="))
-
+    elseif custom.type == "service" then
       -- _G.log_fd = assert(io.open(log_fn, "w+"))
 
       _ = custom.prepare and custom.prepare()
@@ -227,8 +223,6 @@ repeat
 
       -- _G.log_fd:close()
       -- _G.log_fd = _G.devnull
-
-      log.debug(("=== Итерация цикла с заданиями завершена ==="))
     else
       log.bad"Запускаемый тип проверочного узла на данный момент не поддерживается"
     end
