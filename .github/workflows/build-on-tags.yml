@@ -26,6 +26,7 @@ jobs:
           - openvpn
           - openvpn-tlscrypt
           - anyconnect
+          - custom
     steps:
 
     - id: fixes

@@ -14,7 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        proto: [cloak, shadowsocks, wireguard, amnezia-wireguard, openvpn, openvpn-tlscrypt, anyconnect]
+        proto:
+          - cloak
+          - shadowsocks
+          - wireguard
+          - amnezia-wireguard
+          - openvpn
+          - openvpn-tlscrypt
+          - anyconnect
+          - custom
     steps:
     - id: fixes
       uses: actions/github-script@v7
