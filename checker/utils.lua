@@ -188,6 +188,7 @@ local function log(t)
   local tpl = o.template or "%s%s [%s] | %s | %s%s\n"
   local fds = {
     info = _G.stdout,
+    bad  = _G.stderr,
   }
   local signs = {
     bad = "!!",
@@ -215,7 +216,7 @@ local function log(t)
     reset = "%{reset}",
     bold = "%{bold}",
   }
-  local console_fd = o.fd or fds[t.level] or _G.stderr
+  local console_fd = o.fd or fds[t.level] or assert(_G.stderr)
   local logfile_fd = _G.log_fd
   local function handle_newlines(str)
     local s = tostring(str)
@@ -357,9 +358,11 @@ function _U.trace(srv)
     return false
   end
 
-  _U.logger.debug(mtr_fd:read"*a")
+  local res = (mtr_fd:read"*a" or "")
+  _U.logger.debug(res)
   mtr_fd:close()
   _U.logger.debug"===== Завершено ====="
+  return res
 end
 
 function _U.divine_grenade()
@@ -565,14 +568,20 @@ function _U.setup_ssh_tunnel()
         "-oConnectTimeout=3",
         "-oServerAliveInterval=3",
         "-oServerAliveCountMax=3",
-        -- "-o StrictHostKeyChecking=no",
-        -- "-o UserKnownHostsFile=/dev/null",
+        -- "-oTCPKeepAlive=3",
+        -- "-oStrictHostKeyChecking=no",
+        -- "-oUserKnownHostsFile=/dev/null",
         "-qqq",
         stdout = _G.log_fd or _G.stdout,
         stderr = _G.log_fd or _G.stderr,
       }
       if not ssh_tun.proc or ssh_tun.proc:poll() then
-        _U.logger.bad(("Проблема при инициализации! Сообщение об ошибке: %s. Код: %d"):format(ssh_tun.errmsg, ssh_tun.errno))
+        _U.logger.bad(
+          ("Проблема при инициализации! Сообщение об ошибке: %s. Код: %d"):format(
+            ssh_tun.errmsg,
+            ssh_tun.errno
+          )
+        )
         if ssh_tun.proc then
           ssh_tun.proc:kill()
           ssh_tun.proc = nil

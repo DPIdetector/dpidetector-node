@@ -7,6 +7,19 @@ _G.config_default = {
   get_ip_url     = "https://geo.dpidetect.org/get-ip/plain",
 }
 
+--- @type file*
+_G.devnull        = assert(io.output("/dev/null"))
+if _G.QUIET then
+  _G.stdout = _G.devnull
+  _G.stderr = _G.devnull
+else
+  _G.stdout = assert(io.stdout)
+  _G.stderr = assert(io.stderr)
+  io.output(io.stdout)
+end
+--- @type file*
+_G.log_fd = _G.devnull
+
 local json        = require"cjson"
 local custom      = require"checker.custom"
 local utils       = require"checker.utils"
@@ -31,20 +44,7 @@ _G.DEBUG          = os.getenv"DEBUG" or os.getenv(("%s_DEBUG"):format(_G.proto:g
 _G.VERBOSE        = os.getenv"VERBOSE" or os.getenv(("%s_VERBOSE"):format(_G.proto:gsub("-", "_")))
 _G.QUIET          = os.getenv"QUIET" and not (_G.VERBOSE or _G.DEBUG)
 
---- @type file*
-_G.devnull        = assert(io.output("/dev/null"))
-if _G.QUIET then
-  _G.stdout = _G.devnull
-  _G.stderr = _G.devnull
-else
-  _G.stdout = assert(io.stdout)
-  _G.stderr = assert(io.stderr)
-  io.output(io.stdout)
-end
-
 local log_fn = "/tmp/log"
---- @type file*
-_G.log_fd = _G.devnull
 
 log.debug"Запуск приложения"
 
@@ -214,10 +214,21 @@ repeat
         log.debug"=================="
       end
     elseif custom.type == "service" then --- NOTE: мессенджеры, соцсети, ...
-      --- TODO:
-      custom.connect()
-      custom.check()
-      custom.disconnect()
+      log.debug(("=== Итерация цикла с заданиями начата ==="))
+
+      -- _G.log_fd = assert(io.open(log_fn, "w+"))
+
+      _ = custom.prepare and custom.prepare()
+      _ = custom.perform and custom.perform()
+      _ = custom.finish and custom.finish()
+
+      if _G.need_restart then os.exit(1) end
+      --- NOTE: ☝️ перезапускаем контейнер, если начала происходить какая-то дичь
+
+      -- _G.log_fd:close()
+      -- _G.log_fd = _G.devnull
+
+      log.debug(("=== Итерация цикла с заданиями завершена ==="))
     else
       log.bad"Запускаемый тип проверочного узла на данный момент не поддерживается"
     end

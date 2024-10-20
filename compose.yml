@@ -1,7 +1,6 @@
 services:
   cloak:
     image: ghcr.io/dpidetector/node-cloak
-    # image: dpidetector/node-cloak
     build:
       context: .
       dockerfile: ./protos/cloak/Dockerfile
@@ -13,10 +12,12 @@ services:
       - "com.centurylinklabs.watchtower.enable=false"
     restart: always
     # restart: on-failure:3
+    logging:
+      options:
+        max-size: 30M
 
   shadowsocks:
     image: ghcr.io/dpidetector/node-shadowsocks
-    # image: dpidetector/node-shadowsocks
     build:
       context: .
       dockerfile: ./protos/shadowsocks/Dockerfile
@@ -25,10 +26,12 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     restart: always
+    logging:
+      options:
+        max-size: 30M
 
   amnezia-wireguard:
     image: ghcr.io/dpidetector/node-amnezia-wireguard
-    # image: dpidetector/node-amnezia-wireguard
     build:
       context: .
       dockerfile: ./protos/amnezia-wireguard/Dockerfile
@@ -41,10 +44,12 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     restart: always
+    logging:
+      options:
+        max-size: 30M
 
   wireguard:
     image: ghcr.io/dpidetector/node-wireguard
-    # image: dpidetector/node-wireguard
     build:
       context: .
       dockerfile: ./protos/wireguard/Dockerfile
@@ -57,10 +62,12 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     restart: always
+    logging:
+      options:
+        max-size: 30M
 
   openvpn-tlscrypt:
     image: ghcr.io/dpidetector/node-openvpn-tlscrypt
-    # image: dpidetector/node-openvpn-tlscrypt
     build:
       context: .
       dockerfile: ./protos/openvpn-tlscrypt/Dockerfile
@@ -73,10 +80,12 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     restart: always
+    logging:
+      options:
+        max-size: 30M
 
   openvpn:
     image: ghcr.io/dpidetector/node-openvpn
-    # image: dpidetector/node-openvpn
     build:
       context: .
       dockerfile: ./protos/openvpn/Dockerfile
@@ -89,10 +98,12 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     restart: always
+    logging:
+      options:
+        max-size: 30M
 
   anyconnect:
     image: ghcr.io/dpidetector/node-anyconnect
-    # image: dpidetector/node-anyconnect
     build:
       context: .
       dockerfile: ./protos/anyconnect/Dockerfile
@@ -105,3 +116,24 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     restart: always
+    logging:
+      options:
+        max-size: 30M
+
+  custom:
+    image: ghcr.io/dpidetector/node-custom
+    build:
+      context: .
+      dockerfile: ./protos/custom/Dockerfile
+    env_file:
+      - "user.conf"
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+    restart: always
+    logging:
+      options:
+        max-size: 30M
