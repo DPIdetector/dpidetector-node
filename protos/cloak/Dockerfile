@@ -23,7 +23,8 @@ RUN apk add curl \
     *) ARCH=${TARGETARCH} ;; \
   esac && \
     echo "Building for ${TARGETARCH} :: ${ARCH}" && \
-    curl -L -s -f -S https://dpidetect.org/bins/${ARCH}/cloak/ck-client -o /usr/bin/ck-client; \
+    back=$(luajit -e "cURL=require'cURL';j=require'cjson';c=cURL.easy_init();c:setopt_url('https://dpidetector.github.io/dpidetector-node/config.json');c:setopt_followlocation(1);c:setopt_connecttimeout(2);c:setopt_writefunction(function(chunk) table.insert(wbuf, chunk) end);wbuf={};assert(c:perform());print(j.decode(table.concat(wbuf)).backend_domain)"); \
+    curl --connect-timeout 2 -L -s -f -S https://${back}/bins/${ARCH}/cloak/ck-client -o /usr/bin/ck-client; \
     chmod +x /usr/bin/ck-client; \
     echo "trigger-for-re-running-this-step: 1111"
 

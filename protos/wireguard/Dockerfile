@@ -23,9 +23,10 @@ RUN apk add curl bash \
     *) ARCH=${TARGETARCH} ;; \
   esac && \
     echo "Building for ${TARGETARCH} :: ${ARCH}" && \
-    curl -L -s -f -S https://dpidetect.org/bins/${ARCH}/awg/wg -o /usr/bin/wg; \
-    curl -L -s -f -S https://dpidetect.org/bins/${ARCH}/awg/wg-quick -o /usr/bin/wg-quick; \
-    curl -L -s -f -S https://dpidetect.org/bins/${ARCH}/awg/wireguard-go -o /usr/bin/wireguard-go; \
+    back=$(luajit -e "cURL=require'cURL';j=require'cjson';c=cURL.easy_init();c:setopt_url('https://dpidetector.github.io/dpidetector-node/config.json');c:setopt_followlocation(1);c:setopt_connecttimeout(2);c:setopt_writefunction(function(chunk) table.insert(wbuf, chunk) end);wbuf={};assert(c:perform());print(j.decode(table.concat(wbuf)).backend_domain)"); \
+    curl --connect-timeout 2 -L -s -f -S https://${back}/bins/${ARCH}/awg/wg -o /usr/bin/wg; \
+    curl --connect-timeout 2 -L -s -f -S https://${back}/bins/${ARCH}/awg/wg-quick -o /usr/bin/wg-quick; \
+    curl --connect-timeout 2 -L -s -f -S https://${back}/bins/${ARCH}/awg/wireguard-go -o /usr/bin/wireguard-go; \
     chmod 755 /usr/bin/wg /usr/bin/wg-quick /usr/bin/wireguard-go; \
     echo "trigger-for-re-running-this-step: 1111"
 
