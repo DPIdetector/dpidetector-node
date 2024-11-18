@@ -29,7 +29,7 @@ _C.connect        = function(server)
     timeout = 10,
     connect_timeout = 10,
     retries = 5,
-  }
+  }.body
   log.debug"===== Завершено ====="
 
   log.debug"===== Попытка десериализации полученного конфига ====="
@@ -47,6 +47,9 @@ _C.connect        = function(server)
       log.bad(("Ошибка десериализации мета-информации о сервере: %s"):format(meta_r))
       return false
     end
+  else
+    log.bad(("Ошибка десериализации (или верификации) мета-информации о сервере: %s"):format(meta_r))
+    return false
   end
   log.debug"===== Завершено ====="
 
@@ -156,7 +159,7 @@ _C.checker        = function(server)
     timeout = 10,
     connect_timeout = 10,
     retries = 2,
-  }
+  }.body
   local ret = check(res, server.meta.server_ip)
   log.debug"==== Выход из функции проверки доступности ===="
   return ret

@@ -72,10 +72,10 @@ repeat
 
   _G.current_config_json = req{
     url = "https://dpidetector.github.io/dpidetector-node/config.json", --- NOTE: 🤔
-  }
+  }.body or ""
 
   local interval = getconf"interval"
-  local geo = req{ url = getconf"get_geo_url", }
+  local geo = req{ url = getconf"get_geo_url", }.body or "XX"
 
   if os.getenv"NO_SSH" then
     log.debug"=== (SSH-функциональность отключена пользователем) ==="
@@ -99,7 +99,7 @@ repeat
         timeout = 10,
         connect_timeout = 10,
         retries = 10,
-      }
+      }.body or ""
 
       if servers_fetched
           and servers_fetched:match"domain"
@@ -174,7 +174,7 @@ repeat
               timeout = 10,
               connect_timeout = 10,
               retries = 0,
-            }
+            }.body or ""
 
             local rok, resp_t = pcall(json.decode, resp_json)
             if not rok then

@@ -342,7 +342,7 @@ function _U.trace(srv)
     protoport = ""
   end
   local mtr_fd = io.popen(table.concat({
-      "mtr",
+      ("mtr%s"):format(srv.force_ipv4 and " -4" or (srv.force_ipv6 and " -6") or ""),
       "--no-dns",
       "--report",
       ("--report-cycles=%d"):format(srv.cycles or 5),
@@ -406,14 +406,14 @@ function _U.is_locked()
 end
 
 function _U.req(t)
-  local function failed(s) return not (not (s:match"CURL%-")) end
+  local function failed(s) return not (not ((s or ""):match"CURL%-")) end
   local r = require"checker.requests"
   local l = _U.logger
 
   l.debug"= Запуск функциии выполнения веб-запроса ="
   local ret = r(t)
 
-  if failed(ret) then
+  if failed(ret.body) then
     l.debug"== При выполнении запроса произошла ошибка =="
     local retries = t.retries or 3
 
@@ -424,7 +424,7 @@ function _U.req(t)
         l.debug(("=== Попытка %d ==="):format(fails))
         _U.sleep(3)
         ret = r(t)
-        if failed(ret) then fails = fails + 1 end
+        if failed(ret.body) then fails = fails + 1 end
       until fails > retries or not (failed(ret))
       if failed(ret) then
         l.bad"Попытки получения ответа исчерпаны. Ответ получить не удалось"
@@ -479,7 +479,7 @@ function _U.setup_ssh_tunnel()
   local sp = require"subprocess"
 
   local function req(o)
-    return _U.req{ headers = _G.headers, url = o.url }
+    return _U.req{ headers = _G.headers, url = o.url }.body
   end
 
   if req{ url = ("%s/active"):format(cont_url) } == "true" then

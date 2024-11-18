@@ -15,15 +15,15 @@ _C.prepare    = function()
   local api            = ("https://%s/api"):format(getconf"backend_domain")
   local tasks_endpoint = ("%s/checker/tasks/"):format(api)
 
-  log.debug"===== Получение параметров заданий ====="
+  log.print"Получение параметров заданий"
   local meta_r = req{
     url = tasks_endpoint,
     headers = _G.headers,
     timeout = 10,
     connect_timeout = 10,
     retries = 5,
-  }
-  log.debug"===== Завершено ====="
+  }.body or ""
+  log.good"Завершено"
 
   log.debug"===== Попытка десериализации полученного конфига ====="
   if meta_r:match"^%[" or meta_r:match"^%{" then
@@ -32,21 +32,26 @@ _C.prepare    = function()
       if type(res) == "table" and #res > 0 then
         _C.queue = {}
         for i = 1, #res do
-          local r = res[i]
-          local cmd = r.command
+          local r    = res[i]
+          local cmd  = r.command
           local opts = {
-            task_id = r.task_id,
-            tgt = r.target,
+            task_id  = r.task_id,
+            tgt      = r.target,
           }
           local cmds = {
-            trace = { port = r.port or 443, proto = r.proto or "tcp", },
-            curl  = { post = r.post, },
-            proxy = { post = r.post, url = r.url, },
+            trace    = { port = r.port or 443, proto = r.proto or "tcp", },
+            curl     = { post = r.post, },
+            proxy    = { post = r.post, url = r.url, },
+            sni_slow = { url = r.url, },
           }
           local c = cmds[cmd]
 
           if c then
-            _C.queue[cmd] = _C.queue[cmd] or {}
+            _C.queue[cmd]  = _C.queue[cmd] or {}
+            c.force_v4     = r.force_v4
+            c.range        = r.range
+            c.conn_timeout = r.conn_timeout
+            c.req_timeout  = r.req_timeout
             for k, v in pairs(c) do
               opts[k] = v
             end
@@ -71,17 +76,88 @@ _C.perform    = function()
   local back = ("https://%s"):format(getconf"backend_domain")
 
   local jobs = {
-    trace = function(o) return trace{ host = o.tgt, proto = o.proto or "tcp", port = o.proto or 443, } end,
-    curl  = function(o) return req{ url = o.tgt, post = o.post, timeout = 5, connect_timeout = 5, retries = 0, } end,
-    proxy = function(o) return req{ url = o.url or back, post = o.post, proxy = o.tgt, timeout = 5, connect_timeout = 5, retries = 0, } end,
+    trace = function(o)
+      return trace{
+        host = o.tgt,
+        proto = o.proto or "tcp",
+        port = o.proto or 443,
+        force_ipv4 = o.force_v4 or true, --- NOTE: на некоторых провайдерах по IPv6 не замедляется
+      }
+    end,
+    curl  = function(o)
+      return req{
+        url = o.tgt,
+        post = o.post,
+        timeout = o.req_timeout or 5,
+        connect_timeout = o.conn_timeout or 5,
+        retries = 0,
+        force_ipv4 = o.force_v4 or true, --- NOTE: на некоторых провайдерах по IPv6 не замедляется
+        range = o.range or "0-400000", --- NOTE: 🤔
+        include_header_in_body = true,
+      }.body
+    end,
+    proxy = function(o)
+      return req{
+        url = o.url or back,
+        post = o.post,
+        proxy = o.tgt,
+        timeout = o.req_timeout or 5,
+        connect_timeout = o.conn_timeout or 5,
+        retries = 0,
+        range = o.range or "0-400000", --- NOTE: 🤔
+        force_ipv4 = o.force_v4 or true, --- NOTE: на некоторых провайдерах по IPv6 не замедляется
+        include_header_in_body = true,
+      }.body
+    end,
+    sni_slow = function(o)
+      local scheme, host, uri = o.url:match"^([^/]*)://([^/]*)(.*)"
+      return {
+        raw_speed = req{
+          url = o.url,
+          force_ipv4 = o.force_v4 or true, --- NOTE: на некоторых провайдерах по IPv6 не замедляется
+          range = o.range or "0-400000", --- NOTE: 🤔
+          timeout = o.req_timeout or 5,
+          connect_timeout = o.conn_timeout or 5,
+          writefunction = function() end,
+          retries = 0,
+          measure_dlspeed = true,
+          ignore_errors = true,
+        }.dlspeed or 0,
+        sni_speed = req{
+          url = ("%s://%s%s"):format(scheme, o.tgt, uri),
+          force_ipv4 = o.force_v4 or true, --- NOTE: на некоторых провайдерах по IPv6 не замедляется
+          range = o.range or "0-400000", --- NOTE: 🤔
+          timeout = o.req_timeout or 5,
+          connect_timeout = o.conn_timeout or 5,
+          no_verify_host = true,
+          connect_to = ("::%s"):format(host),
+          headers = { ("Host: %s"):format(host), },
+          writefunction = function() end,
+          retries = 0,
+          measure_dlspeed = true,
+          ignore_errors = true,
+        }.dlspeed or 0,
+      }
+    end,
   }
   _C.logs    = {}
+  log.print"Выполнение заданий"
   for job_type, _ in pairs(jobs) do
+    log.debug(("Обработка заданий типа '%s'"):format(job_type))
     local current_queue = _C.queue[job_type] or {}
     for i = 1, #current_queue do
-      _C.logs[current_queue[i].task_id] = b64enc(jobs[job_type](current_queue[i]) or "")
+      local q = current_queue[i]
+      local t = jobs[job_type](q)
+      local t_id = q.task_id
+      log.debug(("Задание с ID %s"):format(t_id))
+      if job_type == "sni_slow" then
+        _C.logs[t_id] = t
+      else
+        _C.logs[t_id] = b64enc(t or "")
+      end
     end
   end
+  log.good"Завершено"
 end
 
 _C.finish     = function()
@@ -96,7 +172,7 @@ _C.finish     = function()
     timeout = 10,
     connect_timeout = 10,
     retries = 0,
-  }
+  }.body or ""
 
   local rok, resp_t = pcall(json.decode, resp_json)
   if not rok then

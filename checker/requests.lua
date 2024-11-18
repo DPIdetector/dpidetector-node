@@ -26,15 +26,45 @@ return function(settings)
     c:setopt_interface(settings.interface)
   end
   c:setopt_cookiejar("/tmp/cookies.txt")
-  if _G.DEBUG then
+  if settings.include_header_in_body then
+    c:setopt_header(1) -- включать заголовки в тело ответа
+  elseif settings.headerfunction then
+    c:setopt_headerfunction(settings.headerfunction)
+  elseif _G.DEBUG or settings.collect_headers then
     c:setopt_headerfunction(function(chunk) table.insert(hbuf, chunk) end)
-    -- c:setopt_header(1) -- включать заголовки в тело ответа
   end
   c:setopt_url(settings.url)
-  c:setopt_writefunction(function(chunk) table.insert(wbuf, chunk) end)
+  c:setopt_writefunction(settings.writefunction or function(chunk) table.insert(wbuf, chunk) end)
 
   c:setopt_timeout(settings.timeout or 10)
   c:setopt_connecttimeout(settings.connect_timeout or 10)
+
+  if settings.progressfunction then
+    c:setopt_progressfunction(settings.progressfunction)
+    c:setopt_noprogress(0)
+  end
+
+  if settings.connect_to then
+    c:setopt_connect_to{ settings.connect_to, }  --- NOTE: {}, sic❗
+  end
+
+  if settings.no_verify then
+    c:setopt_ssl_verifypeer(0)
+  end
+
+  if settings.no_verify_host then
+    c:setopt_ssl_verifyhost(0)
+  end
+
+  if settings.range then
+    c:setopt_range(settings.range)
+  end
+
+  if settings.force_ipv4 then
+    c:setopt_ipresolve(cURL.IPRESOLVE_V4)
+  elseif settings.force_ipv6 then
+    c:setopt_ipresolve(cURL.IPRESOLVE_V6)
+  end
 
   -- c:perform()
   if _G.DEBUG then
@@ -56,28 +86,36 @@ return function(settings)
   end
 
   local success, errmsg = pcall(c.perform, c)
-  if not success then
+  local ret = {}
+  if not success and not settings.ignore_errors then
     log.bad(("Ошибка при выполнении запроса: %q"):format(errmsg))
-    return errmsg
+    ret.error = errmsg
   end
 
+  local dlspeed
+  if settings.measure_dlspeed then
+    dlspeed = c:getinfo(cURL.INFO_SPEED_DOWNLOAD_T)
+  end
   c:close()
 
-  local ret = table.concat(wbuf):gsub("[\r\n]*$", "")
-  log.debug"=== выполнение запроса завершено ==="
-  log.debug"====== Заголовки ответа: ======"
-  for _, v in ipairs(
-    split(
-      table.concat(hbuf or {})
-      :gsub("[\r\n]*$", ""),
-      "\n"
-    )
-  ) do
-    log.debug(("%s"):format(v))
+  ret.body = table.concat(wbuf or {}):gsub("[\r\n]*$", "")
+  ret.headers = table.concat(hbuf or {}):gsub("[\r\n]*$", "")
+  ret.headers = #ret.headers > 0 and ret.headers or nil
+  ret.dlspeed = dlspeed
+  if _G.DEBUG then
+    log.debug"=== выполнение запроса завершено ==="
+    if not settings.headerfunction then
+      log.debug"====== Заголовки ответа: ======"
+      for _, v in ipairs(split(ret.headers, "\n")) do
+        log.debug(("%s"):format(v))
+      end
+      log.debug"======================"
+    end
+    if not settings.writefunction then
+      log.debug"====== Тело ответа: ======"
+      log.debug(("%s"):format(ret.body or ""))
+      log.debug"==================="
+    end
   end
-  log.debug"======================"
-  log.debug"====== Тело ответа: ======"
-  log.debug(("%s"):format(ret))
-  log.debug"==================="
   return ret
 end
