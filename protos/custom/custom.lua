@@ -52,6 +52,8 @@ _C.prepare    = function()
             c.range        = r.range
             c.conn_timeout = r.conn_timeout
             c.req_timeout  = r.req_timeout
+            c.headers_only = r.headers_only
+            --- TODO: подумать на счёт того чтобы просто запихивать в c всё из r (предварительно убрав лишнее)? 🤔
             for k, v in pairs(c) do
               opts[k] = v
             end
@@ -92,8 +94,9 @@ _C.perform    = function()
         connect_timeout = o.conn_timeout or 5,
         retries = 0,
         force_ipv4 = o.force_v4 or true, --- NOTE: на некоторых провайдерах по IPv6 не замедляется
-        range = o.range or "0-400000", --- NOTE: 🤔
-        include_header_in_body = true,
+        range = o.range,
+        include_headers_in_body = true,
+        headers_only = o.headers_only,
       }.body
     end,
     proxy = function(o)
@@ -104,9 +107,10 @@ _C.perform    = function()
         timeout = o.req_timeout or 5,
         connect_timeout = o.conn_timeout or 5,
         retries = 0,
-        range = o.range or "0-400000", --- NOTE: 🤔
+        range = o.range,
         force_ipv4 = o.force_v4 or true, --- NOTE: на некоторых провайдерах по IPv6 не замедляется
-        include_header_in_body = true,
+        include_headers_in_body = true,
+        headers_only = o.headers_only,
       }.body
     end,
     sni_slow = function(o)
@@ -115,7 +119,7 @@ _C.perform    = function()
         raw_speed = req{
           url = o.url,
           force_ipv4 = o.force_v4 or true, --- NOTE: на некоторых провайдерах по IPv6 не замедляется
-          range = o.range or "0-400000", --- NOTE: 🤔
+          range = o.range,
           timeout = o.req_timeout or 5,
           connect_timeout = o.conn_timeout or 5,
           writefunction = function() end,

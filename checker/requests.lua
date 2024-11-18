@@ -26,15 +26,18 @@ return function(settings)
     c:setopt_interface(settings.interface)
   end
   c:setopt_cookiejar("/tmp/cookies.txt")
-  if settings.include_header_in_body then
+  if settings.include_headers_in_body and not settings.headers_only then
     c:setopt_header(1) -- включать заголовки в тело ответа
   elseif settings.headerfunction then
     c:setopt_headerfunction(settings.headerfunction)
-  elseif _G.DEBUG or settings.collect_headers then
+  elseif _G.DEBUG or settings.collect_headers or settings.headers_only then
     c:setopt_headerfunction(function(chunk) table.insert(hbuf, chunk) end)
   end
   c:setopt_url(settings.url)
-  c:setopt_writefunction(settings.writefunction or function(chunk) table.insert(wbuf, chunk) end)
+
+  if not settings.headers_only then
+    c:setopt_writefunction(settings.writefunction or function(chunk) table.insert(wbuf, chunk) end)
+  end
 
   c:setopt_timeout(settings.timeout or 10)
   c:setopt_connecttimeout(settings.connect_timeout or 10)
@@ -101,6 +104,7 @@ return function(settings)
   ret.body = table.concat(wbuf or {}):gsub("[\r\n]*$", "")
   ret.headers = table.concat(hbuf or {}):gsub("[\r\n]*$", "")
   ret.headers = #ret.headers > 0 and ret.headers or nil
+  if settings.headers_only and settings.include_headers_in_body then ret.body = ret.headers end
   ret.dlspeed = dlspeed
   if _G.DEBUG then
     log.debug"=== выполнение запроса завершено ==="
