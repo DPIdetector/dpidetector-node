@@ -67,10 +67,11 @@ jobs:
           linux/arm/v7
           linux/arm64/v8
           linux/386
-          linux/ppc64le
-        # linux/riscv64
-        # ☝️  Will be available after alpine 3.20 release
-        # what about mips?
+        #   linux/riscv64
+        #   linux/ppc64le
+        # 👆 нету luajit (по крайней мере в образах alpine).
+        # Разве что если мигрировать на PUC-Rio (не-JIT) реализацию Lua, или вообще на Go
+        # N.B: хотелось бы ещё mips, но ни alpine нету под него, ни с докером не понятно
         tags: |
           ghcr.io/${{ steps.fixes.outputs.owner }}/node-${{ matrix.proto }}:${{ github.ref_name }}
           ghcr.io/${{ steps.fixes.outputs.owner }}/node-${{ matrix.proto }}:latest

@@ -11,7 +11,7 @@ RUN apk add curl bash \
   mtr \
   openssh-server \
   openssh-client \
-  ; \
+  && \
   case "${TARGETARCH}" in \
     [3-6]86) ARCH="x86" ;; \
     arm64v8) ARCH="arm64" ;; \

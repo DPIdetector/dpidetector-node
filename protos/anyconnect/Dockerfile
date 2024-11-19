@@ -12,7 +12,7 @@ RUN apk add curl bash \
   openssh-server \
   openssh-client \
   openconnect \
-  ; \
+  && \
   echo "trigger-for-re-running-this-step: 1111"
 
 # WARN: don't forget that all paths are relative to the root of the repo

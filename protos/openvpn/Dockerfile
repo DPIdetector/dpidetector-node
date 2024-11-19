@@ -11,7 +11,7 @@ RUN apk add \
   openssh-server \
   openssh-client \
   mtr \
-  ; \
+  && \
   echo "trigger-for-re-running-this-step: 1111"
 # openvpn-openrc
 
