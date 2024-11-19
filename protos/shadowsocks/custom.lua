@@ -23,7 +23,7 @@ _C.connect    = function(server)
     timeout = 10,
     connect_timeout = 10,
     retries = 5,
-  }.body
+  }.body or ""
   log.debug"===== Завершено ====="
 
   log.debug"===== Попытка десериализации полученного конфига ====="
