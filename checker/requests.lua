@@ -35,7 +35,9 @@ return function(settings)
   end
   c:setopt_url(settings.url)
 
-  if not settings.headers_only then
+  if settings.headers_only and not settings.include_headers_in_body then
+    c:setopt_writefunction(function() end)
+  else
     c:setopt_writefunction(settings.writefunction or function(chunk) table.insert(wbuf, chunk) end)
   end
 
