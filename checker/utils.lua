@@ -286,7 +286,7 @@ function _U.split(str, spr)
   local sep = spr or "\n"
   local result = {}
   local i = 1
-  for c in str:gmatch(string.format("([^%s]+)", sep)) do
+  for c in (str or ""):gmatch(string.format("([^%s]+)", sep)) do
     result[i] = c
     i = i + 1
   end
