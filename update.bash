@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+
 source .common.bash
 
 lock check && die "В данный момент работает другая копия данного скрипта" \
