@@ -11,6 +11,8 @@ H1 = __H1__
 H2 = __H2__
 H3 = __H3__
 H4 = __H4__
+I1 = __H1__
+Itime = __ITIME__
 
 [Peer]
 PublicKey = __PUBKEY__

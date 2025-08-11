@@ -50,6 +50,8 @@ _C.connect        = function(server)
         and res.h2
         and res.h3
         and res.h4
+        and res.i1
+        and res.itime
         and res.test_host
         and res.test_port
     then
@@ -88,6 +90,8 @@ _C.connect        = function(server)
     H2 = server.meta.h2,
     H3 = server.meta.h3,
     H4 = server.meta.h4,
+    I1 = server.meta.i1,
+    ITIME = server.meta.itime,
   }
   local srv_cfg = cfg_tpl:gsub("__([A-Za-z0-9_-.]+)__", replaces)
 
